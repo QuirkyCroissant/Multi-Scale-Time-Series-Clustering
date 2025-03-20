@@ -12,38 +12,50 @@ This repository contains code and documentation for my bachelor thesis on cluste
 - **Evaluate performance:** Test and validate the algorithms on various datasets.
 - **(Optional Extension):** Generate graphs from time-series data, apply clustering algorithms to the graphs, and compare the results with the time series clustering using similarity measures.
 
+
 ## Project Structure
 
 ```
 .
-├│ data/                  # Sample datasets or links to data sources
-├│ docs/                  # Documentation and thesis drafts
-├│ notebooks/                  # Jupyter notebooks for exploratory analysis
-├│ src/                  # Source code (algorithms, utility functions)
-├│ experiments/                  # Scripts and logs from experimental runs
-└│ README.md                  # Project overview and instructions
+├│ data/                  	# Sample datasets or links to data sources
+├│ docs/                  	# Documentation and thesis drafts
+├│ notebooks/				# Jupyter notebooks for exploratory analysis
+├│ src/						# Source code (algorithms, utility functions)
+│   ├── main.py				# Main script with mode selection
+├│ experiments/             # Scripts and logs from experimental runs
+└│ README.md                # Project overview and instructions
 ```
+
 
 ## Installation/Usage
 
 1. **Clone the repository:**
+
     ```bash
-git clone https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering
-```
+		git clone https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering
+	```
+	
+	
 2. **Create and activate a virtual environment:**
+
     ```bash
-python -m venv env
-source env/bin/activate   # On Windows use: env\Scripts\activate
-```
+		python -m venv env
+		source env/bin/activate   
+	```
+	
 3. **Install dependencies:**
+
     ```bash
-pip install -r requirements.txt
-```
+		pip install -r requirements.txt
+	```
+
 4. **Run the project:**
-    Provide instructions on how to run the code. For example:
+
+    Run the application by providing the compiler with either the prototype or the final implementation flags:
     ```bash
-python src/main.py
-```
+		python src/main.py --mode <demo / prod>
+	```
+
 
 ## License
 
