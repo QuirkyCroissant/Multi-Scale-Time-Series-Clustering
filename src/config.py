@@ -9,7 +9,12 @@ SYNTHETHIC_TIMESERIES_CONFIG: dict = {
 }
 
 # Constants that are controlling the time series data generation for the prototype
-TIME = np.arange(2 * SYNTHETHIC_TIMESERIES_CONFIG['period_length'] + 1, dtype=np.float32)
+SAMPLES_PER_DAY = 24
+# 2 years of 24 hours on 365 days timesteps from 0 to 731
+TIME = np.arange(2 * 
+                 SAMPLES_PER_DAY * 
+                 SYNTHETHIC_TIMESERIES_CONFIG['period_length'] + 1,
+                  dtype=np.float32) / SAMPLES_PER_DAY
 TS_META = (TIME,
            SYNTHETHIC_TIMESERIES_CONFIG['baseline'], 
            SYNTHETHIC_TIMESERIES_CONFIG["amplitude"],
@@ -17,5 +22,6 @@ TS_META = (TIME,
            SYNTHETHIC_TIMESERIES_CONFIG["noise_level"]
            )
 
-SYN_EXPORT_TITLE = "Synthetic Time Series"
+SYN_EXPORT_TITLE = "Synthetic_Time_Series"
+SYN_EXPORT_DATA_NAME = "ts_demo_data"
 RANDOM_SEED = 69

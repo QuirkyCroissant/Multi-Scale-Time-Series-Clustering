@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def trend(time, slope=0):
     return slope * time
@@ -10,8 +11,9 @@ def pattern_characteristics(season_time):
                        1 / np.exp(3 * season_time))
     return pattern
 
-def seasonality(time, period, amplitude=1, phase=0):
-    '''adds seasonality/repetitive pattern to the time series data'''
+def seasonality(time, period=365, amplitude=1, phase=0):
+    '''adds seasonality/repetitive pattern to the time series data
+    args: time is in days but has 24 samples per day'''
     season_time = ((time + phase) % period) / period
     return amplitude * pattern_characteristics(season_time)
     
@@ -21,6 +23,18 @@ def noise(time, noise_level=1, seed=None):
     rnd = np.random.RandomState(seed)
     return rnd.randn(len(time)) * noise_level
     
+def convert_time_series_to_dataframe(time: np.ndarray, ts_series: tuple):
+    '''takes in the time array and the value array and returns a dataframe out of it'''
+
+    start_timestamp = pd.to_datetime("2023-01-01 00:00")
+    n_points = len(time)
+    date_index = pd.date_range(start=start_timestamp, periods=n_points, freq="H")
+
+    return  pd.DataFrame(
+        {"time": date_index,"value": ts_series}
+    )
+    
+
 
 
 def create_time_series(ts_metastats: tuple):

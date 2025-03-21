@@ -1,6 +1,6 @@
 import argparse
-from data_generation import create_time_series
-from project_utilities import plot_time_series
+from data_generation import create_time_series, convert_time_series_to_dataframe
+from project_utilities import plot_time_series, export_dataframe_to_csv
 import config
 
 import numpy as np
@@ -15,7 +15,12 @@ def run_prototype():
     
     ts_data = create_time_series(config.TS_META)
     plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
-                                       xlabel='Time', ylabel='Value')
+                                       xlabel='Time(Days)', ylabel='Value')
+    
+    print("Converting time series to dataframe and exporting to CSV")
+    syn_ts_df = convert_time_series_to_dataframe(config.TIME, ts_data)
+    export_dataframe_to_csv(syn_ts_df)
+    
 
 def run_final():
     '''production ready implementation which will be 
