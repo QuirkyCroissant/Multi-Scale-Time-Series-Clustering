@@ -12,9 +12,6 @@ def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME):
     print(f"DataFrame exported to: {filepath}")
     
 
-
-
-
 def plot_time_series(x, y, format='-', start=0, end=None,
                      title=None, xlabel=None, ylabel=None, legend=None ):
     plt.figure(figsize=(10, 6))

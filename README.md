@@ -17,16 +17,17 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
 ```
 .
-├│ data/                  	# Sample datasets or links to data sources
-│   ├── ts_demo_data.csv  	# Synthetical demo data (prototype mode)
-├│ docs/                  	# Documentation and thesis drafts
-├│ notebooks/				# Jupyter notebooks for exploratory analysis
-├│ src/						# Source code (algorithms, utility functions)
-│   ├── main.py				# Main script with mode selection
-│   ├── data_generation.py  # Module for synthetic dataset generation
-│   ├── config.py  			# Stores essential parameters and constants
-├│ experiments/             # Scripts and logs from experimental runs
-└│ README.md                # Project overview and instructions
+├│ data/                  		# Sample datasets or links to data sources
+│   ├── ts_demo_data.csv  		# Synthetical demo data (prototype mode)
+├│ docs/                  		# Documentation and thesis drafts
+├│ notebooks/					# Jupyter notebooks for exploratory analysis
+├│ src/							# Source code (algorithms, utility functions)
+│   ├── config.py  				# Stores essential parameters and constants
+│   ├── data_generation.py  	# Module for synthetic dataset generation
+│   ├── main.py					# Main script with mode selection
+│   ├── project_utilities.py	# helper utilities for the project
+├│ experiments/             	# Scripts and logs from experimental runs
+└│ README.md                	# Project overview and instructions
 ```
 
 

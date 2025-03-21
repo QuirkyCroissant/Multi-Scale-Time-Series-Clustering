@@ -31,7 +31,7 @@ def convert_time_series_to_dataframe(time: np.ndarray, ts_series: tuple):
     date_index = pd.date_range(start=start_timestamp, periods=n_points, freq="H")
 
     return  pd.DataFrame(
-        {"time": date_index,"value": ts_series}
+        {"Time": date_index,"Value": ts_series}
     )
     
 
