@@ -1,4 +1,9 @@
 import argparse
+from data_generation import create_time_series
+from project_utilities import plot_time_series
+import config
+
+import numpy as np
 
 def run_prototype():
     '''function which triggers prototyp mode of application,
@@ -7,7 +12,10 @@ def run_prototype():
         it further upstream for clustering.'''
     print("Running Application in Prototype mode:")
     print("Triggering generation of synthetic dataset")
-    pass
+    
+    ts_data = create_time_series(config.TS_META)
+    plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
+                                       xlabel='Time', ylabel='Value')
 
 def run_final():
     '''production ready implementation which will be 

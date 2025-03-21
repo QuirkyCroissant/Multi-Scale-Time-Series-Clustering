@@ -22,6 +22,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 ├│ notebooks/				# Jupyter notebooks for exploratory analysis
 ├│ src/						# Source code (algorithms, utility functions)
 │   ├── main.py				# Main script with mode selection
+│   ├── data_generation.py  # Module for synthetic dataset generation
 ├│ experiments/             # Scripts and logs from experimental runs
 └│ README.md                # Project overview and instructions
 ```
