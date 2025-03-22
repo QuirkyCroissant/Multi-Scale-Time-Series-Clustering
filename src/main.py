@@ -1,9 +1,32 @@
 import argparse
 from data_generation import create_time_series, convert_time_series_to_dataframe
-from project_utilities import plot_time_series, export_dataframe_to_csv
+from data_corruption import corrupt_time_series_data
+from project_utilities import plot_time_series, export_dataframe_to_csv, import_dataframe_from_csv, import_dataframe_from_csv_indexed
+from project_utilities import deindex_dataframe
 import config
 
 import numpy as np
+
+
+def demo_generation_pipeline():
+    '''synthetic data generation pipeline'''
+    ts_data = create_time_series(config.TS_META)
+    plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
+                                       xlabel='Time(Days)', ylabel='Value')
+    
+    print("Converting time series to dataframe and exporting to CSV")
+
+    syn_ts_df = convert_time_series_to_dataframe(config.TIME, ts_data)
+    export_dataframe_to_csv(syn_ts_df, config.SYN_EXPORT_DATA_NAME+"_clean")
+
+def demo_corruption_pipeline():
+    '''corrupted data generation pipeline'''
+    clean_df = import_dataframe_from_csv_indexed(config.SYN_EXPORT_DATA_NAME+"_clean")
+    corr_df = corrupt_time_series_data(clean_df)
+    corr_df = deindex_dataframe(corr_df)
+    export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
+
+
 
 def run_prototype():
     '''function which triggers prototyp mode of application,
@@ -13,13 +36,12 @@ def run_prototype():
     print("Running Application in Prototype mode:")
     print("Triggering generation of synthetic dataset")
     
-    ts_data = create_time_series(config.TS_META)
-    plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
-                                       xlabel='Time(Days)', ylabel='Value')
+    demo_generation_pipeline()
+
+    print("Triggering corruption of synthetic dataset")
+    demo_corruption_pipeline()
     
-    print("Converting time series to dataframe and exporting to CSV")
-    syn_ts_df = convert_time_series_to_dataframe(config.TIME, ts_data)
-    export_dataframe_to_csv(syn_ts_df)
+    
     
 
 def run_final():

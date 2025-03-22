@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 import config
-import datetime
 import os
 
 def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME):
@@ -11,6 +11,27 @@ def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME):
     df.to_csv(filepath, index=False, sep=';')
     print(f"DataFrame exported to: {filepath}")
     
+def import_dataframe_from_csv(filename=config.SYN_EXPORT_DATA_NAME):
+    '''imports time series dataframe from csv without indexing'''
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir,"..", "data")
+    filepath = os.path.join(output_dir, filename)
+
+    df = pd.read_csv(filepath, sep=';')
+    return df
+    
+def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME):
+    '''imports time series dataframe from csv and indexes the time column, 
+    in order to leverage powerful and efficient DateTimeIndex functionality from pandas library'''
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir,"..", "data")
+    filepath = os.path.join(output_dir, filename)
+
+    df = pd.read_csv(filepath, sep=';', index_col=['Time'], parse_dates=['Time'])
+    return df
+    
+def deindex_dataframe(dataframe):
+    return dataframe.reset_index(level=0, drop=True).reset_index().rename(columns={'Time': 'time', 'Value': 'value'})
 
 def plot_time_series(x, y, format='-', start=0, end=None,
                      title=None, xlabel=None, ylabel=None, legend=None ):

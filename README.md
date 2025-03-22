@@ -18,11 +18,13 @@ This repository contains code and documentation for my bachelor thesis on cluste
 ```
 .
 ├│ data/                  		# Sample datasets or links to data sources
-│   ├── ts_demo_data.csv  		# Synthetical demo data (prototype mode)
+│   ├── ts_demo_data_clean.csv  # Synthetical demo data (prototype mode)
+│   ├── ts_demo_data_corrupted.csv  	# modified faulty data (prototype mode)
 ├│ docs/                  		# Documentation and thesis drafts
 ├│ notebooks/					# Jupyter notebooks for exploratory analysis
 ├│ src/							# Source code (algorithms, utility functions)
 │   ├── config.py  				# Stores essential parameters and constants
+│   ├── data_corruption.py  	# Module for synthetic dataset corruption
 │   ├── data_generation.py  	# Module for synthetic dataset generation
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project

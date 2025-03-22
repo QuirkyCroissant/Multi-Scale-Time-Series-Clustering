@@ -25,3 +25,12 @@ TS_META = (TIME,
 SYN_EXPORT_TITLE = "Synthetic_Time_Series"
 SYN_EXPORT_DATA_NAME = "ts_demo_data"
 RANDOM_SEED = 69
+
+
+#### corruption parameters
+
+CORRUPTION_PROBS = {
+    "intact": 0.55,       # chance to leave day intact
+    "partial": 0.25,      # chance to randomly delete some hours
+    "reduce": 0.20        # chance to fully reduce to a single measurement
+}
