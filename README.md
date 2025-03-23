@@ -20,15 +20,21 @@ This repository contains code and documentation for my bachelor thesis on cluste
 ├│ data/                  		# Sample datasets or links to data sources
 │   ├── ts_demo_data_clean.csv  # Synthetical demo data (prototype mode)
 │   ├── ts_demo_data_corrupted.csv  	# modified faulty data (prototype mode)
+│   ├── restored/  				# restored data by multiple means(e.g.: interpolation)
+│      ├── ts_demo_data_cubicspline.csv  	# restored data through cubic spline interpolation
+│      ├── ts_demo_data_linear.csv  	# restored data through linear interpolation
 ├│ docs/                  		# Documentation and thesis drafts
 ├│ notebooks/					# Jupyter notebooks for exploratory analysis
 ├│ src/							# Source code (algorithms, utility functions)
 │   ├── config.py  				# Stores essential parameters and constants
 │   ├── data_corruption.py  	# Module for synthetic dataset corruption
 │   ├── data_generation.py  	# Module for synthetic dataset generation
+│   ├── data_restoration.py  	# Module for the restoration of data through various means
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project
 ├│ experiments/             	# Scripts and logs from experimental runs
+│   ├── logs					# log files from various experimental operations
+│   ├── plots					# plot diagrams from various experimental operations
 └│ README.md                	# Project overview and instructions
 ```
 

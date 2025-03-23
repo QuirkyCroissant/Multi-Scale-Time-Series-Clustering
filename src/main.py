@@ -1,12 +1,15 @@
 import argparse
 from data_generation import create_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
-from project_utilities import plot_time_series, export_dataframe_to_csv, import_dataframe_from_csv, import_dataframe_from_csv_indexed
-from project_utilities import deindex_dataframe, plot_time_series_comparison
+from data_restoration import restore_time_series_data
+from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
+                               import_dataframe_from_csv, import_dataframe_from_csv_indexed,
+                               deindex_dataframe, plot_time_series_comparison )
 import config
 
 import numpy as np
 import pandas as pd
+import os
 
 
 def demo_generation_pipeline():
@@ -27,6 +30,11 @@ def demo_corruption_pipeline():
     corr_df = deindex_dataframe(corr_df)
     export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
+def aggregation_pipeline():
+    '''aggregation pipeline'''
+    restore_time_series_data()
+    pass
+    
 
 def run_prototype(generate_data, plot=False):
     '''function which triggers prototyp mode of application,
@@ -60,6 +68,36 @@ def run_prototype(generate_data, plot=False):
             }
 
         plot_time_series_comparison(time_series_dict)
+        del time_series_dict
+    
+    print("Triggering Aggregation Pipeline")
+    aggregation_pipeline()
+
+    if plot:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        input_dir = os.path.join(script_dir,"..", "data", "restored")
+
+        clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
+        linear_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_linear", input_dir=input_dir)
+        time_series_dict = {
+            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
+            "Linear_TS": (linear_df["time"], linear_df["value"])
+            }
+        plot_time_series_comparison(time_series_dict, title="LinearInterpolation_Comparison")
+        del time_series_dict
+
+        cubic_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_cubicspline", input_dir=input_dir)
+        time_series_dict = {
+            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
+            "CubicSpline_TS": (cubic_df["time"], cubic_df["value"])
+            }
+        plot_time_series_comparison(time_series_dict, title="CubicSplineInterpolation_Comparison")
+        del time_series_dict
+
+
+
+        
+        
     
     
 

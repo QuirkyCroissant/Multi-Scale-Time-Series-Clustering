@@ -34,3 +34,8 @@ CORRUPTION_PROBS = {
     "partial": 0.30,      # chance to randomly delete some hours
     "reduce": 0.30        # chance to fully reduce to a single measurement
 }
+
+
+#### restoration parameters
+
+INTERPOLATION_METHODS = ['linear', 'cubicspline']
