@@ -28,18 +28,20 @@ def demo_corruption_pipeline():
     export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
 
-def run_prototype():
+def run_prototype(generate_data):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
         dataset, preprocesses it accordingly, and than moving
         it further upstream for clustering.'''
     print("Running Application in Prototype mode:")
-    print("Triggering generation of synthetic dataset")
     
-    demo_generation_pipeline()
+    if generate_data:
+        print("Triggering generation of synthetic dataset")
+        
+        demo_generation_pipeline()
 
-    print("Triggering corruption of synthetic dataset")
-    demo_corruption_pipeline()
+        print("Triggering corruption of synthetic dataset")
+        demo_corruption_pipeline()
     
     clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
     corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
@@ -78,10 +80,19 @@ def main():
         help="Select the mode: 'demo' for synthetic dataset generation and testing, 'prod' for processing the pre-specified dataset."
     )
 
+    parser.add_argument(
+        "--new_data",
+        action="store_true",
+        help="Include this flag (only in demo mode) to generate corrupted, synthetic data."
+    )
+
     args = parser.parse_args()
 
+    if args.mode != "demo" and args.new_data:
+        parser.error("The --new_data flag is only allowed when --mode is set to demo.")
+
     if args.mode == "demo":
-        run_prototype()
+        run_prototype(generate_data=args.new_data)
     elif args.mode == "prod":
         run_final()
     else:
