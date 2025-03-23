@@ -30,7 +30,7 @@ RANDOM_SEED = 69
 #### corruption parameters
 
 CORRUPTION_PROBS = {
-    "intact": 0.55,       # chance to leave day intact
-    "partial": 0.25,      # chance to randomly delete some hours
-    "reduce": 0.20        # chance to fully reduce to a single measurement
+    "intact": 0.40,       # chance to leave day intact
+    "partial": 0.30,      # chance to randomly delete some hours
+    "reduce": 0.30        # chance to fully reduce to a single measurement
 }

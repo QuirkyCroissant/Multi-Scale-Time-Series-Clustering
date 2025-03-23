@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import config
+import datetime
 import os
 
 def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME):
@@ -62,6 +63,35 @@ def plot_time_series(x, y, format='-', start=0, end=None,
     filename = f"{title}.png"
     filepath = os.path.join(output_dir, filename)
 
+    plt.savefig(filepath)
+    plt.close()
+    print(f"Plot saved to: {filepath}")
+
+
+def plot_time_series_comparison(series_dict, title="TimeSeries_Plot", xlabel="Time", ylabel="Value", fmt='-', freq='H'):
+    '''Plots time series and exports the image, is possible to compare multiple series.'''
+
+    plt.figure(figsize=(10, 6))
+
+    for label, (x, y) in series_dict.items():
+        # series get normalized by frequenzy(hourly, daily etc.)
+        s = pd.Series(y.values, index=pd.to_datetime(x))
+        new_index = pd.date_range(start=s.index.min(), end=s.index.max(), freq=freq)
+        s_reindexed = s.reindex(new_index)
+        # time series now gets plotted true to its temporal scale, NaN values get ignored
+        plt.plot(s_reindexed.index, s_reindexed.values, fmt, label=label)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, "..", "experiments", "plots")
+    
+    filename = f"{title}.png"
+    filepath = os.path.join(output_dir, filename)
     plt.savefig(filepath)
     plt.close()
     print(f"Plot saved to: {filepath}")

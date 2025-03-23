@@ -2,10 +2,11 @@ import argparse
 from data_generation import create_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from project_utilities import plot_time_series, export_dataframe_to_csv, import_dataframe_from_csv, import_dataframe_from_csv_indexed
-from project_utilities import deindex_dataframe
+from project_utilities import deindex_dataframe, plot_time_series_comparison
 import config
 
 import numpy as np
+import pandas as pd
 
 
 def demo_generation_pipeline():
@@ -27,7 +28,6 @@ def demo_corruption_pipeline():
     export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
 
-
 def run_prototype():
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
@@ -41,6 +41,20 @@ def run_prototype():
     print("Triggering corruption of synthetic dataset")
     demo_corruption_pipeline()
     
+    clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
+    corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
+
+    clean_df["Time"] = pd.to_datetime(clean_df["Time"])
+    corr_df["time"] = pd.to_datetime(corr_df["time"])
+
+    # Create a dictionary with one key-value pair:
+    # The key is a label, and the value is a tuple of the time and value columns.
+    time_series_dict = {
+        "Clean_TS": (clean_df["Time"], clean_df["Value"]),
+        "Corrupted_TS": (corr_df["time"], corr_df["value"])
+        }
+
+    plot_time_series_comparison(time_series_dict)
     
     
 
