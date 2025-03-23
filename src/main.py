@@ -28,13 +28,13 @@ def demo_corruption_pipeline():
     export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
 
-def run_prototype(generate_data):
+def run_prototype(generate_data, plot=False):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
         dataset, preprocesses it accordingly, and than moving
         it further upstream for clustering.'''
     print("Running Application in Prototype mode:")
-    
+
     if generate_data:
         print("Triggering generation of synthetic dataset")
         
@@ -43,20 +43,23 @@ def run_prototype(generate_data):
         print("Triggering corruption of synthetic dataset")
         demo_corruption_pipeline()
     
-    clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-    corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
+    if plot:
+        print("Generates comparisson plot of time series data")
 
-    clean_df["Time"] = pd.to_datetime(clean_df["Time"])
-    corr_df["time"] = pd.to_datetime(corr_df["time"])
+        clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
+        corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
-    # Create a dictionary with one key-value pair:
-    # The key is a label, and the value is a tuple of the time and value columns.
-    time_series_dict = {
-        "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-        "Corrupted_TS": (corr_df["time"], corr_df["value"])
-        }
+        clean_df["Time"] = pd.to_datetime(clean_df["Time"])
+        corr_df["time"] = pd.to_datetime(corr_df["time"])
 
-    plot_time_series_comparison(time_series_dict)
+        # Create a dictionary with one key-value pair:
+        # The key is a label, and the value is a tuple of the time and value columns.
+        time_series_dict = {
+            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
+            "Corrupted_TS": (corr_df["time"], corr_df["value"])
+            }
+
+        plot_time_series_comparison(time_series_dict)
     
     
 
@@ -76,6 +79,7 @@ def main():
         "--mode",
         type=str,
         default="demo",
+        required=True,
         choices=["demo", "prod"],
         help="Select the mode: 'demo' for synthetic dataset generation and testing, 'prod' for processing the pre-specified dataset."
     )
@@ -86,13 +90,19 @@ def main():
         help="Include this flag (only in demo mode) to generate corrupted, synthetic data."
     )
 
+    parser.add_argument(
+        "--comp_img",
+        action="store_true",
+        help="Saves comparisson plot of synthetic time series and its different versions downstream. (experiments/plots)"
+    )
+
     args = parser.parse_args()
 
     if args.mode != "demo" and args.new_data:
         parser.error("The --new_data flag is only allowed when --mode is set to demo.")
 
     if args.mode == "demo":
-        run_prototype(generate_data=args.new_data)
+        run_prototype(generate_data=args.new_data, plot=args.comp_img)
     elif args.mode == "prod":
         run_final()
     else:
