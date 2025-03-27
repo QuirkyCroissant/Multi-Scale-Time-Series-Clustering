@@ -8,12 +8,18 @@ def interpolate_dataset(dataframe: pd.DataFrame, freq='H', method='linear', spli
     full_index = pd.date_range(start=dataframe.index.min(), end=dataframe.index.max(), freq=freq)
     df_full = dataframe.reindex(full_index)
     
-    if method == 'linear':
-        df_repaired = df_full.interpolate(method=method)
-    elif method == 'cubicspline':
+    if (method == 'krogh' or method == 'piecewise_polynomial' 
+    or method == 'pchip' or method == 'akima' or method == 'cubicspline' 
+    or method == 'polynomial' or method == 'spline'):
         df_repaired = df_full.interpolate(method=method, order=spline_order)
+
+    elif (method == 'linear' or method == 'time' or method == 'index' or method == 'values' 
+    or method == 'pad' or method == 'nearest' or method == 'zero' 
+    or method == 'slinear' or method == 'quadratic' or method == 'cubic' 
+    or method == 'barycentric'):
+        df_repaired = df_full.interpolate(method=method)
     else:
-        raise ValueError("Unsupported interpolation method. Use 'linear' or 'cubicspline'.")
+        raise ValueError(f"Unsupported interpolation method. {method}")
 
     df_repaired.fillna(method="ffill", inplace=True)
     df_repaired.fillna(method="bfill", inplace=True)

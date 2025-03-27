@@ -38,4 +38,11 @@ CORRUPTION_PROBS = {
 
 #### restoration parameters
 
-INTERPOLATION_METHODS = ['linear', 'cubicspline']
+INTERPOLATION_METHODS = [
+    "linear", "time", "index", 
+    "values", "pad", "nearest", 
+    "zero", "slinear", "quadratic", 
+    "cubic", "barycentric", "polynomial", 
+    "spline", "piecewise_polynomial", 
+    "pchip", "akima", "cubicspline"
+    ]
