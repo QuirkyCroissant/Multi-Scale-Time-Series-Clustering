@@ -78,21 +78,26 @@ def run_prototype(generate_data, plot=False):
         input_dir = os.path.join(script_dir,"..", "data", "restored")
 
         clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-        linear_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_linear", input_dir=input_dir)
-        time_series_dict = {
-            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-            "Linear_TS": (linear_df["time"], linear_df["value"])
-            }
-        plot_time_series_comparison(time_series_dict, title="LinearInterpolation_Comparison")
-        del time_series_dict
+        for method in config.INTERPOLATION_METHODS:
+            
+            aggregated_df = import_dataframe_from_csv(
+                config.SYN_EXPORT_DATA_NAME+"_"+method, 
+                input_dir=input_dir)
+            
+            time_series_dict = {
+                "Clean_TS": (clean_df["Time"], clean_df["Value"]),
+                f"{method}_TS": (aggregated_df["time"], aggregated_df["value"])
+                }
+            
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            output_dir = os.path.join(script_dir, "..", "experiments", "plots", "interpolations")
 
-        cubic_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_cubicspline", input_dir=input_dir)
-        time_series_dict = {
-            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-            "CubicSpline_TS": (cubic_df["time"], cubic_df["value"])
-            }
-        plot_time_series_comparison(time_series_dict, title="CubicSplineInterpolation_Comparison")
-        del time_series_dict
+            plot_time_series_comparison(
+                time_series_dict, 
+                title=f"{method}-Interpolation_Comparison",
+                output_dir=output_dir
+                )
+            del time_series_dict, aggregated_df
 
 
 

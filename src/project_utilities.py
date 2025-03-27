@@ -4,6 +4,7 @@ import pandas as pd
 import config
 import datetime
 import os
+import json
 
 def compute_and_save_accuracy(df, method_name):
     '''Computes the accuracy of how similar the given dataset to the uncorrupted 
@@ -11,32 +12,36 @@ def compute_and_save_accuracy(df, method_name):
     it into the log files in the experiments folder.'''
     ts_demo_data_clean = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
     #df = deindex_dataframe(df)
-    messages = []
+    values = []
     mse_value = mean_squared_error(ts_demo_data_clean['Value'], df['value'])
-    mse_msg = str(f"The Mean-Squared-Error(MSE) for using the {method_name}-method is: \n{mse_value}")
-    messages.append(mse_msg)
-    print(mse_msg)
+    print(f"The Mean-Squared-Error(MSE) for using the {method_name}-method is: \n{mse_value}")
+    values.append(mse_value)
     
     mape_value = mean_absolute_percentage_error(ts_demo_data_clean['Value'], df['value'])
-    mape_msg = str(f"The Mean-Absolute-Percentage-Error(MAPE) for using the {method_name}-method is: \n{mape_value}")
-    messages.append(mape_msg)
-    print(mape_msg)
+    print(f"The Mean-Absolute-Percentage-Error(MAPE) for using the {method_name}-method is: \n{mape_value}")
+    values.append(mape_value)
 
-    export_logfile(messages, method_name)
+    export_logfile(values, method_name)
 
     
-def export_logfile(messages, method_name):
+def export_logfile(values, method_name):
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "logs")
+    output_dir = os.path.join(script_dir,"..", "experiments", "logs", "interpolations")
     
-    filename = os.path.join(output_dir, f"accuracy_log_{method_name}_{date}.txt")
+    filename = os.path.join(output_dir, f"accuracy_log_{method_name}_{date}.json")
     
-    with open(filename, "w") as f:
-        for message in messages:
-            f.write(message + "\n")
-    
+    with(open(filename, "w", encoding='utf-8') as f): 
+        json.dump({"method": method_name, 
+                   "mse": values[0], 
+                   "mape": values[-1], 
+                   "date": date
+                   }, 
+                  f, 
+                  ensure_ascii=False, 
+                  indent=4)
+
     print(f"Log file saved to: {filename}")
     
     
@@ -106,7 +111,10 @@ def plot_time_series(x, y, format='-', start=0, end=None,
     plt.close()
     print(f"Plot saved to: {filepath}")
 
-def plot_time_series_comparison(series_dict, title="TimeSeries_Plot", xlabel="Time", ylabel="Value", fmt='-', freq='H'):
+def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
+                                output_dir=None, 
+                                xlabel="Time", ylabel="Value", fmt='-', 
+                                freq='H'):
     '''Plots time series and exports the image, is possible to compare multiple series.'''
 
     plt.figure(figsize=(10, 6))
@@ -125,10 +133,12 @@ def plot_time_series_comparison(series_dict, title="TimeSeries_Plot", xlabel="Ti
     plt.legend()
     plt.grid(True)
     
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, "..", "experiments", "plots")
+    if output_dir is None:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(script_dir, "..", "experiments", "plots")
     
-    filename = f"{title}.png"
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"{title}_{date}.png"
     filepath = os.path.join(output_dir, filename)
     plt.savefig(filepath)
     plt.close()

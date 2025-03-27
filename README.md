@@ -21,8 +21,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── ts_demo_data_clean.csv  # Synthetical demo data (prototype mode)
 │   ├── ts_demo_data_corrupted.csv  	# modified faulty data (prototype mode)
 │   ├── restored/  				# restored data by multiple means(e.g.: interpolation)
-│      ├── ts_demo_data_cubicspline.csv  	# restored data through cubic spline interpolation
-│      ├── ts_demo_data_linear.csv  	# restored data through linear interpolation
+│      ├── ts_demo_data_<method>.csv  	# restored data through interpolation method
+│      ├── ... 
 ├│ docs/                  		# Documentation and thesis drafts
 ├│ notebooks/					# Jupyter notebooks for exploratory analysis
 ├│ src/							# Source code (algorithms, utility functions)
@@ -34,7 +34,9 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── project_utilities.py	# helper utilities for the project
 ├│ experiments/             	# Scripts and logs from experimental runs
 │   ├── logs					# log files from various experimental operations
+│      ├── interpolations
 │   ├── plots					# plot diagrams from various experimental operations
+│      ├── interpolations
 └│ README.md                	# Project overview and instructions
 ```
 
