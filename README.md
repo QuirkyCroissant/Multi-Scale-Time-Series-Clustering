@@ -33,6 +33,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project
 ├│ experiments/             	# Scripts and logs from experimental runs
+│   ├── distance_matrices		# exported dissimilarity/distance matrices used for clustering
 │   ├── logs					# log files from various experimental operations
 │      ├── interpolations
 │   ├── plots					# plot diagrams from various experimental operations

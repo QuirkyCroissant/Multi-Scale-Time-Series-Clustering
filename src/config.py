@@ -46,3 +46,12 @@ INTERPOLATION_METHODS = [
     "spline", "piecewise_polynomial", 
     "pchip", "akima", "cubicspline"
     ]
+
+### dissimilarity measure parameters
+
+# segmentation length defines the size of segmentated chunks for the whole time series, 
+# in the current case it is assumed that we deal with hourly measurements and therefore
+# we want to group the hourly data into chunks of days, therefore 24
+SEGMENTATION_WINDOW = 24
+SYN_EXPORT_DIST_MATRIX_NAME = "distance_matrix"
+DEFAULT_DISSIMILARITY = "fastDTW"

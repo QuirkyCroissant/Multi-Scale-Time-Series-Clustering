@@ -1,10 +1,27 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 import pandas as pd
+import numpy as np
 import config
 import datetime
 import os
+import glob
 import json
+
+def export_distance_matrix(np_matrix, filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+                           method=config.DEFAULT_DISSIMILARITY):
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir,"..", "experiments", "distance_matrices")
+    filename = f"{filename}_{method}_{date}"
+    filepath = os.path.join(output_dir, filename)
+    np.save(filepath, np_matrix)
+    print(f"Distance matrix saved to: {filepath}")
+        
+        
+# TODO: import_distance_matrix function
+    
+
 
 def compute_and_save_accuracy(df, method_name):
     '''Computes the accuracy of how similar the given dataset to the uncorrupted 
@@ -65,11 +82,14 @@ def import_dataframe_from_csv(filename=config.SYN_EXPORT_DATA_NAME, input_dir=No
     df = pd.read_csv(filepath, sep=';')
     return df
     
-def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME):
+def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, restored=False):
     '''imports time series dataframe from csv and indexes the time column, 
     in order to leverage powerful and efficient DateTimeIndex functionality from pandas library'''
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "data")
+    if restored:
+        output_dir = os.path.join(script_dir,"..", "data", "restored")
+    else:
+        output_dir = os.path.join(script_dir,"..", "data")
     filepath = os.path.join(output_dir, filename)
 
     df = pd.read_csv(filepath, sep=';', index_col=[0], parse_dates=[0])

@@ -2,6 +2,7 @@ import argparse
 from data_generation import create_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
+from data_clustering import initiate_clustering_process
 from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
                                deindex_dataframe, plot_time_series_comparison )
@@ -33,7 +34,13 @@ def demo_corruption_pipeline():
 def aggregation_pipeline():
     '''aggregation pipeline'''
     restore_time_series_data()
+    
+
+def clustering_pipeline():
+    '''clustering pipeline, which consists of 2 parts(distance computation and clustering)'''
+    initiate_clustering_process()
     pass
+    
     
 
 def run_prototype(generate_data, plot=False):
@@ -71,7 +78,12 @@ def run_prototype(generate_data, plot=False):
         del time_series_dict
     
     print("Triggering Aggregation Pipeline")
-    aggregation_pipeline()
+    # aggregation_pipeline()
+
+    print("Triggering Clustering Pipeline")
+    clustering_pipeline()
+    
+
 
     if plot:
         script_dir = os.path.dirname(os.path.abspath(__file__))
