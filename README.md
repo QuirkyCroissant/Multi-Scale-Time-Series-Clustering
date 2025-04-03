@@ -47,29 +47,46 @@ This repository contains code and documentation for my bachelor thesis on cluste
 1. **Clone the repository:**
 
     ```bash
-		git clone https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering
+	git clone https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering
 	```
 	
 	
 2. **Create and activate a virtual environment:**
 
     ```bash
-		python -m venv env
-		source env/bin/activate   
+	python -m venv env
+	source env/bin/activate   
 	```
 	
 3. **Install dependencies:**
 
     ```bash
-		pip install -r requirements.txt
+	pip install -r requirements.txt
 	```
 
 4. **Run the project:**
 
-    Run the application by providing the compiler with either the prototype or the final implementation flags:
+    Run the application by specifying the mode and additional optional flags:
+    
     ```bash
-		python src/main.py --mode <demo / prod>
-	```
+    # For demo (prototype) mode with new synthetic data and various plots:
+    python src/main.py --mode demo --new_data --comp_img
+    
+    # For production mode:
+    python src/main.py --mode prod
+    ```
+
+    **Available Command-Line Flags:**
+    - `--mode`: **Required.** Choose `demo` for synthetic dataset generation, corruption, restoration, and clustering; or `prod` for processing a pre-specified dataset.
+    - `--new_data`: **Optional (demo mode only).** Generates new synthetic data (clean and corrupted). Cannot be used with production mode.
+    - `--comp_img`: **Optional.** Saves comparison plots of the time series at various pipeline stages (e.g., clean vs. corrupted, and clean vs. interpolated).
+
+## Application Runtime Workflow
+
+The flowchart below summarizes the main pipelines of the project:
+
+![Application Flowchart](docs/runtime_flowchart.png)
+*Figure: Overall Projects Pipeline Flowchart*
 
 
 ## License
