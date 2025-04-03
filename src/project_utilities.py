@@ -49,7 +49,7 @@ def export_logfile(values, method_name):
     
     filename = os.path.join(output_dir, f"accuracy_log_{method_name}_{date}.json")
     
-    with(open(filename, "w", encoding='utf-8') as f): 
+    with open(filename, "w", encoding='utf-8') as f: 
         json.dump({"method": method_name, 
                    "mse": values[0], 
                    "mape": values[-1], 

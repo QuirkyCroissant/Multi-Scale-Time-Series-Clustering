@@ -5,6 +5,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm import tqdm
 from fastdtw import fastdtw
+from dtw import dtw
 
 
 def convert_to_segmented_series(data, window_length):
@@ -32,8 +33,9 @@ def compute_distance_matrix(sequences: np.ndarray):
     distance_matrix = np.zeros((N, N))
     
     def compute_distance_pair(i, j):
-        dist, _ = fastdtw(sequences[i], sequences[j])
-        return i,j, dist
+        #dist, _ = fastdtw(sequences[i], sequences[j])
+        alignment = dtw(sequences[i], sequences[j])
+        return i,j, alignment.distance
     
     pairs = [(i, j) for i in range(N) for j in range(i+1, N)]
     results = Parallel(n_jobs=-1)(
@@ -57,11 +59,9 @@ def initiate_clustering_process():
     time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
         config.SYN_EXPORT_DATA_NAME + '_linear', restored=True)
     
-    # TODO: After Smoke test portion of data ran successfully, apply the algorithm to the whole time series
-    # not just 40% of the data
-    TESTING_TIMESERIES_DATA_10PCT = time_series_data.iloc[:int(len(time_series_data) * 0.4)]
+    # FULL_TIMESERIES_DATA = time_series_data.iloc[:int(len(time_series_data) * 1)]
 
-    sequences = convert_to_segmented_series(TESTING_TIMESERIES_DATA_10PCT, config.SEGMENTATION_WINDOW)
+    sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
     dtw_matrix = compute_distance_matrix(sequences)
     
     print("Distance matrix statistics:")
@@ -71,7 +71,7 @@ def initiate_clustering_process():
     print("minimum, maximum and average value")
     print(np.min(dtw_matrix), np.max(dtw_matrix), np.mean(dtw_matrix))
 
-    export_distance_matrix(dtw_matrix)
+    export_distance_matrix(dtw_matrix, method="dtw")
 
 
 
