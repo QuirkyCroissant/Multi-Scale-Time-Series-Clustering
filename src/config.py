@@ -38,6 +38,7 @@ CORRUPTION_PROBS = {
 
 #### restoration parameters
 
+DEFAULT_INTERPOLATION_METHOD = "linear"
 INTERPOLATION_METHODS = [
     "linear", "time", "index", 
     "values", "pad", "nearest", 
@@ -54,4 +55,6 @@ INTERPOLATION_METHODS = [
 # we want to group the hourly data into chunks of days, therefore 24
 SEGMENTATION_WINDOW = 24
 SYN_EXPORT_DIST_MATRIX_NAME = "distance_matrix"
-DEFAULT_DISSIMILARITY = "fastDTW"
+DEFAULT_DISSIMILARITY = "dtw"
+DISSIMILARITY_MEASURES = ["fastDTW", "dtw"]
+

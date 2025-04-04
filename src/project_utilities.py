@@ -5,7 +5,7 @@ import numpy as np
 import config
 import datetime
 import os
-import glob
+import re
 import json
 
 def export_distance_matrix(np_matrix, filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
@@ -20,6 +20,50 @@ def export_distance_matrix(np_matrix, filename=config.SYN_EXPORT_DIST_MATRIX_NAM
         
         
 # TODO: import_distance_matrix function
+def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+                           method=config.DEFAULT_DISSIMILARITY,
+                           date=None):
+    '''Imports a distance matrix from the respective experiments folder and depending
+    on if a specific date has not been passed it will retrieve the newest file or a
+    specific one.'''
+    
+    if date is None:
+    
+        filename_without_date = f"{filename}_{method}_"
+        dir_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 
+            "..", 
+            "experiments", 
+            "distance_matrices"
+        )
+        
+        all_files = os.listdir(dir_path)
+        matching_files = []
+        date_pattern = re.compile(rf"^{re.escape(filename_without_date)}(\d{{4}}-\d{{2}}-\d{{2}})\.npy$")
+        
+        for file in all_files:
+            match = date_pattern.match(file)
+            if match:
+                file_date = match.group(1)
+                matching_files.append((file_date, file))
+        
+        if not matching_files:
+            raise FileNotFoundError(f"No distance matrix files found starting \
+                                    with '{filename_without_date}' and ending with '{dir_path}' .")
+                
+        matching_files.sort(key=lambda x: x[0], reverse=True)
+        _, youngest_filename = matching_files[0]
+        filepath = os.path.join(dir_path, youngest_filename)
+    else:
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                                "..", 
+                                "experiments", 
+                                "distance_matrices", 
+                                f"{filename}_{method}_{date}.npy")
+    
+    print(f"Loaded distance matrix from: {filepath}")
+
+    return np.load(filepath)
     
 
 

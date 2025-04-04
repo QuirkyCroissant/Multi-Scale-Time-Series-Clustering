@@ -31,19 +31,25 @@ def demo_corruption_pipeline():
     corr_df = deindex_dataframe(corr_df)
     export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
 
-def aggregation_pipeline():
+def aggregation_pipeline(activate_restoration=False):
     '''aggregation pipeline'''
-    restore_time_series_data()
+    if activate_restoration:
+        restore_time_series_data()
     
 
-def clustering_pipeline():
-    '''clustering pipeline, which consists of 2 parts(distance computation and clustering)'''
-    initiate_clustering_process()
-    pass
+def clustering_pipeline(comp_dist=False):
+    '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
+    Included distance argument decides if dissimilarity is computed or an already exported 
+    matrix is used for the subsequent clustering.'''
+    initiate_clustering_process(comp_dist)
     
     
 
-def run_prototype(generate_data, plot=False):
+def run_prototype(generate_data, 
+                  restore=False, 
+                  plot=False, 
+                  compute_dist=False
+                  ):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
         dataset, preprocesses it accordingly, and than moving
@@ -78,10 +84,10 @@ def run_prototype(generate_data, plot=False):
         del time_series_dict
     
     print("Triggering Aggregation Pipeline")
-    # aggregation_pipeline()
+    aggregation_pipeline(restore)
 
     print("Triggering Clustering Pipeline")
-    clustering_pipeline()
+    clustering_pipeline(comp_dist=compute_dist)
     
 
 
@@ -151,13 +157,31 @@ def main():
         help="Saves comparisson plot of synthetic time series and its different versions downstream. (experiments/plots)"
     )
 
+    parser.add_argument(
+        "--restore",
+        action="store_true",
+        help="Include this flag to aggregate, interpolate and save faulty " \
+        "input data that will be used for clustering. (data/restored)"
+    )
+
+    parser.add_argument(
+        "--dist",
+        action="store_true",
+        help="Include this flag to compute and save the dissimilarity measure. (experiments/distance_matrices)"
+    )
+
     args = parser.parse_args()
 
     if args.mode != "demo" and args.new_data:
         parser.error("The --new_data flag is only allowed when --mode is set to demo.")
 
     if args.mode == "demo":
-        run_prototype(generate_data=args.new_data, plot=args.comp_img)
+        run_prototype(
+            generate_data=args.new_data, 
+            restore=args.restore,
+            compute_dist=args.dist,
+            plot=args.comp_img
+        )
     elif args.mode == "prod":
         run_final()
     else:

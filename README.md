@@ -80,6 +80,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
     - `--mode`: **Required.** Choose `demo` for synthetic dataset generation, corruption, restoration, and clustering; or `prod` for processing a pre-specified dataset.
     - `--new_data`: **Optional (demo mode only).** Generates new synthetic data (clean and corrupted). Cannot be used with production mode.
     - `--comp_img`: **Optional.** Saves comparison plots of the time series at various pipeline stages (e.g., clean vs. corrupted, and clean vs. interpolated).
+    - `--restore`: **Optional.** Aggregate, interpolate, and save faulty input data that will be used for clustering (saved in `data/restored`).
+    - `--dist`: **Optional.** Compute and save the dissimilarity measure (saved in `experiments/distance_matrices`).
 
 ## Application Runtime Workflow
 
