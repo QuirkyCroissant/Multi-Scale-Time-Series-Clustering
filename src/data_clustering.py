@@ -2,7 +2,8 @@ import config
 from project_utilities import (import_dataframe_from_csv_indexed, 
                                export_distance_matrix, 
                                import_distance_matrix,
-                               plot_silhouette_score)
+                               plot_silhouette_score,
+                               plot_kmedoid_results)
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
 import numpy as np
@@ -13,7 +14,7 @@ from fastdtw import fastdtw
 from dtw import dtw
 
 
-def convert_to_segmented_series(data, window_length):
+def convert_to_segmented_series(data, window_length=config.SEGMENTATION_WINDOW):
     '''Method takes in time series data in form of a dataframe and converts it into a 2d numpyarray
     and returns a segmented 2d numpy array by a segmented window length defined by the passed 
     argument. The if there is not enough data to be fully segmented in the series, the data points 
@@ -128,7 +129,7 @@ def start_clustering_pipeline(compute_dist=False,
         print("Completed Dissimilarity Matrix Computation.")
 
     # TODO: Passing computed matrix into clustering logic
-    initiate_clustering_computation(import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+    labels, model = initiate_clustering_computation(import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                                  method=config.DEFAULT_DISSIMILARITY,
                                  date=None),
                                  cluster_method=config.DEFAULT_CLUSTERING_METHOD,
@@ -137,4 +138,10 @@ def start_clustering_pipeline(compute_dist=False,
 
     #TODO visualise the labeled sequences from kmedoid
     
+    time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
+            config.SYN_EXPORT_DATA_NAME + '_' + config.DEFAULT_INTERPOLATION_METHOD, 
+            restored=True)
+        
+    segmented_seq = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
+    plot_kmedoid_results(time_series_data, segmented_seq,labels, model)
     
