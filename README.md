@@ -83,6 +83,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
     - `--comp_img`: **Optional.** Saves comparison plots of the time series at various pipeline stages (e.g., clean vs. corrupted, and clean vs. interpolated).
     - `--restore`: **Optional.** Aggregate, interpolate, and save faulty input data that will be used for clustering (saved in `data/restored`).
     - `--dist`: **Optional.** Compute and save the dissimilarity measure (saved in `experiments/distance_matrices`).
+    - `--normalized`: **Optional.** Runs the application in (non-)normalized mode, depending on users cluster usecase(shape or scale based clustering).
 
 ## Application Runtime Workflow
 

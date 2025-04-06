@@ -37,18 +37,19 @@ def aggregation_pipeline(activate_restoration=False):
         restore_time_series_data()
     
 
-def clustering_pipeline(comp_dist=False):
+def clustering_pipeline(comp_dist=False, normalize=False):
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
     matrix is used for the subsequent clustering.'''
-    start_clustering_pipeline(comp_dist)
+    start_clustering_pipeline(comp_dist, normalize)
     
     
 
 def run_prototype(generate_data, 
                   restore=False, 
-                  plot=False, 
-                  compute_dist=False
+                  compute_dist=False,
+                  normalize=False,
+                  plot=False
                   ):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
@@ -87,7 +88,7 @@ def run_prototype(generate_data,
     aggregation_pipeline(restore)
 
     print("Triggering Clustering Pipeline")
-    clustering_pipeline(comp_dist=compute_dist)
+    clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
     
 
 
@@ -170,6 +171,12 @@ def main():
         help="Include this flag to compute and save the dissimilarity measure. (experiments/distance_matrices)"
     )
 
+    parser.add_argument(
+        "--normalized",
+        action="store_true",
+        help="Apply Z-normalization to each time series segment before computing or using distances."
+    )
+
     args = parser.parse_args()
 
     if args.mode != "demo" and args.new_data:
@@ -180,6 +187,7 @@ def main():
             generate_data=args.new_data, 
             restore=args.restore,
             compute_dist=args.dist,
+            normalize=args.normalized,
             plot=args.comp_img
         )
     elif args.mode == "prod":

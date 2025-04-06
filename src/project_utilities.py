@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from scipy.stats import zscore
 import pandas as pd
 import numpy as np
 import config
@@ -8,12 +9,20 @@ import os
 import re
 import json
 
-def export_distance_matrix(np_matrix, filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
-                           method=config.DEFAULT_DISSIMILARITY):
+def export_distance_matrix(np_matrix, 
+                           filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+                           method=config.DEFAULT_DISSIMILARITY,
+                           normalized=False):
+    
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir,"..", "experiments", "distance_matrices")
-    filename = f"{filename}_{method}_{date}"
+    
+    if normalized:
+        filename = f"{filename}_normalized_{method}_{date}"
+    else:
+        filename = f"{filename}_raw_{method}_{date}"
+    
     filepath = os.path.join(output_dir, filename)
     np.save(filepath, np_matrix)
     print(f"Distance matrix saved to: {filepath}")
@@ -21,6 +30,7 @@ def export_distance_matrix(np_matrix, filename=config.SYN_EXPORT_DIST_MATRIX_NAM
         
 # TODO: import_distance_matrix function
 def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+                           is_normalize=False,
                            method=config.DEFAULT_DISSIMILARITY,
                            date=None):
     '''Imports a distance matrix from the respective experiments folder and depending
@@ -29,7 +39,11 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
     
     if date is None:
     
-        filename_without_date = f"{filename}_{method}_"
+        if is_normalize:
+            filename_without_date = f"{filename}_normalized_{method}_"
+        else:
+            filename_without_date = f"{filename}_raw_{method}_"
+
         dir_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
             "..", 
@@ -48,18 +62,24 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
                 matching_files.append((file_date, file))
         
         if not matching_files:
-            raise FileNotFoundError(f"No distance matrix files found starting \
-                                    with '{filename_without_date}' and ending with '{dir_path}' .")
+            error_msg = f"No distance matrix files found starting with '{filename_without_date}' and ending with '{dir_path}' ."
+            raise FileNotFoundError(error_msg)
                 
         matching_files.sort(key=lambda x: x[0], reverse=True)
         _, youngest_filename = matching_files[0]
         filepath = os.path.join(dir_path, youngest_filename)
+
     else:
+        if is_normalize:
+            filename_with_date = f"{filename}_normalized_{method}_{date}.npy"
+        else:
+            filename_with_date = f"{filename}_raw_{method}_{date}.npy"
+
         filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                                 "..", 
                                 "experiments", 
                                 "distance_matrices", 
-                                f"{filename}_{method}_{date}.npy")
+                                filename_with_date)
     
     print(f"Loaded distance matrix from: {filepath}")
 
@@ -208,27 +228,40 @@ def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
     plt.close()
     print(f"Plot saved to: {filepath}")
 
-def plot_silhouette_score(k_values, silhoutte_scores):
+def plot_silhouette_score(k_values, silhoutte_scores, is_normalized=False):
     '''creates silhoutte score plot and saves it into the experiments folder'''
     plt.figure()
     plt.plot(k_values, silhoutte_scores, marker='o')
     plt.xlabel('Number of Clusters (k)')
     plt.ylabel('Silhouette Score')
-    plt.title('Silhouette Score vs. Number of Clusters')
+    plt.title('Silhouette Score vs. Number of Clusters (Normalized)' 
+              if is_normalized else 
+              'Silhouette Score vs. Number of Clusters')
     plt.grid(True)
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
+    if is_normalized:
+        filename = f"silhouette_score_plot_normalized_{date}.png"
+    else:
+        filename = f"silhouette_score_plot_raw_{date}.png"
+        
     plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "..",
                              "experiments",
                              "plots",
                              "clustering",
-                             f"silhouette_score_plot_{date}.png")
+                             filename
+                             )
     plt.savefig(plot_path)
     print(f"Silhouette score plot saved to: {plot_path}")
     plt.close()
 
-def plot_kmedoid_results(time_series, segmented_sequences, labels, model, segment_length=config.SEGMENTATION_WINDOW):
+def plot_kmedoid_results(time_series, 
+                         segmented_sequences, 
+                         labels, 
+                         model, 
+                         is_normalized=False,
+                         segment_length=config.SEGMENTATION_WINDOW):
 
     n_clusters = len(np.unique(labels))
     colors = plt.cm.get_cmap("tab10", n_clusters)
@@ -245,7 +278,12 @@ def plot_kmedoid_results(time_series, segmented_sequences, labels, model, segmen
         segment = time_series[start:end]
         axs[0].plot(range(start, end), segment, color=colors(label), linewidth=0.8)
     
-    axs[0].set_title("Full Time Series with Segments Colored by Cluster")
+    if is_normalized:
+        plot_header = "Full Time Series with Segments Colored by Cluster (Normalized)"
+    else:
+        plot_header = "Full Time Series with Segments Colored by Cluster"
+
+    axs[0].set_title(plot_header)
     axs[0].set_xlabel("Time (Hours or Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
@@ -255,7 +293,10 @@ def plot_kmedoid_results(time_series, segmented_sequences, labels, model, segmen
     for i, idx in enumerate(model.medoid_indices_):
         axs[1].plot(hours, segmented_sequences[idx], label=f"Medoid {i}", color=colors(i), linewidth=2.5)
 
-    axs[1].set_title("Cluster Medoid Profiles")
+    axs[1].set_title("Cluster Medoid Profiles (Normalized)" 
+                     if is_normalized else 
+                     "Cluster Medoid Profiles"
+                     )
     axs[1].set_xlabel("Hour of Day")
     axs[1].set_ylabel("Value")
     axs[1].legend()
@@ -264,10 +305,16 @@ def plot_kmedoid_results(time_series, segmented_sequences, labels, model, segmen
 
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
+    if is_normalized:
+        filename = f"kmedoid_results_plot_normalized_{date}.png"
+    else:
+        filename = f"kmedoid_results_plot_raw_{date}.png"
+        
+
     plot_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "..", "experiments", "plots", "clustering",
-        f"kmedoid_result_plot_{date}.png"
+        filename
     )
 
     plt.tight_layout()

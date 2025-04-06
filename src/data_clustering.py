@@ -6,6 +6,7 @@ from project_utilities import (import_dataframe_from_csv_indexed,
                                plot_kmedoid_results)
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
+from scipy.stats import zscore
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
@@ -28,7 +29,8 @@ def convert_to_segmented_series(data, window_length=config.SEGMENTATION_WINDOW):
 
 
 def compute_distance_matrix(sequences: np.ndarray, 
-                            method=config.DEFAULT_DISSIMILARITY):
+                            method=config.DEFAULT_DISSIMILARITY,
+                            normalize=False):
     '''
     Computes the pair-wise distance of the passed segmented sequence by using Fast-Dynamic Time
     Warping(DTW or fastDTW) dissimilarity measure. It utilizises numerous performant methodologies to realise it, 
@@ -38,6 +40,11 @@ def compute_distance_matrix(sequences: np.ndarray,
 
     N = len(sequences)
     distance_matrix = np.zeros((N, N))
+
+    if normalize:
+        tqdm_desc = f"Computing {method} distances with normalization"
+    else:
+        tqdm_desc = f"Computing {method} distances without normalization"
     
     if method == "fastDTW":
         distance_func = lambda x, y: fastdtw(x, y)[0]
@@ -53,7 +60,7 @@ def compute_distance_matrix(sequences: np.ndarray,
     pairs = [(i, j) for i in range(N) for j in range(i+1, N)]
     results = Parallel(n_jobs=-1)(
         delayed(compute_distance_pair)(i, j, distance_func) for i, j in tqdm(pairs, 
-                                                              desc=f"Computing {method} distances.")
+                                                              desc=tqdm_desc)
     )
 
     for i, j, dist in results:
@@ -67,7 +74,8 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                     cluster_method=config.DEFAULT_CLUSTERING_METHOD,
                                     k=None,
                                     max_k=config.K_MEDOIDS_DEFAULT_MAX_CLUSTERING_AMOUNT,
-                                    save_plots=True):
+                                    save_plots=True,
+                                    is_normalized=False):
     '''Starts clustering procedure on a retrieved distance matrix applying either `kmedoid` or `hierarchical`'''
     if cluster_method == "kmedoids":
         if k is None:
@@ -86,7 +94,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
             k = best_k
 
             if save_plots:
-                plot_silhouette_score(k_values, silhoutte_scores)
+                plot_silhouette_score(k_values, silhoutte_scores, is_normalized)
 
         model = KMedoids(n_clusters=k, 
                          metric='precomputed', 
@@ -103,17 +111,25 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
     
 
 def start_clustering_pipeline(compute_dist=False, 
-                                aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
+                              normalize=False,
+                              aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
     '''Starts the whole clustering process, passing aggregated data through a segmentation preprocessing
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
-    the given distance matrix'''
+    the given distance matrix, also able to differenciate between data normalization or not.'''
     if compute_dist:
         time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
-            config.SYN_EXPORT_DATA_NAME + '_' + config.DEFAULT_INTERPOLATION_METHOD, 
+            config.SYN_EXPORT_DATA_NAME + '_' + aggregation_method, 
             restored=True)
         
         sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
-        distance_matrix = compute_distance_matrix(sequences, method=config.DEFAULT_DISSIMILARITY)
+        if normalize:
+            normalized_sequence = np.apply_along_axis(zscore, 1, sequences)
+            sequences = normalized_sequence
+            
+        distance_matrix = compute_distance_matrix(sequences, 
+                                                  method=config.DEFAULT_DISSIMILARITY,
+                                                  normalize=normalize
+                                                  )
         
         print("Distance matrix statistics:")
         print(distance_matrix.shape)
@@ -121,27 +137,43 @@ def start_clustering_pipeline(compute_dist=False,
         print(distance_matrix[:5, :5])
         print("minimum, maximum and average value")
         print(np.min(distance_matrix), np.max(distance_matrix), np.mean(distance_matrix))
+        print("normalized" if normalize else "not normalized")
 
-        export_distance_matrix(distance_matrix, method=config.DEFAULT_DISSIMILARITY)
+        export_distance_matrix(distance_matrix, 
+                               method=config.DEFAULT_DISSIMILARITY,
+                               normalized=normalize
+                               )
 
 
 
         print("Completed Dissimilarity Matrix Computation.")
 
     # TODO: Passing computed matrix into clustering logic
-    labels, model = initiate_clustering_computation(import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
-                                 method=config.DEFAULT_DISSIMILARITY,
-                                 date=None),
-                                 cluster_method=config.DEFAULT_CLUSTERING_METHOD,
-                                 k=None
+    labels, model = initiate_clustering_computation(
+        import_distance_matrix(
+            filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+            method=config.DEFAULT_DISSIMILARITY,
+            date=None,
+            is_normalize=normalize),
+            cluster_method=config.DEFAULT_CLUSTERING_METHOD,
+            k=None,
+            is_normalized=normalize
     )
 
     #TODO visualise the labeled sequences from kmedoid
     
     time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
-            config.SYN_EXPORT_DATA_NAME + '_' + config.DEFAULT_INTERPOLATION_METHOD, 
+            config.SYN_EXPORT_DATA_NAME + '_' + aggregation_method, 
             restored=True)
         
     segmented_seq = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
-    plot_kmedoid_results(time_series_data, segmented_seq,labels, model)
+    if normalize:
+        normalized_sequence = np.apply_along_axis(zscore, 1, segmented_seq)
+        segmented_seq = normalized_sequence
+
+    plot_kmedoid_results(time_series_data, 
+                         segmented_seq, 
+                         labels, 
+                         model,
+                         is_normalized=normalize)
     
