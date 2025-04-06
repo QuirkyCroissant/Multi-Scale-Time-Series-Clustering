@@ -2,7 +2,7 @@ import argparse
 from data_generation import create_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
-from data_clustering import initiate_clustering_process
+from data_clustering import start_clustering_pipeline
 from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
                                deindex_dataframe, plot_time_series_comparison )
@@ -41,7 +41,7 @@ def clustering_pipeline(comp_dist=False):
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
     matrix is used for the subsequent clustering.'''
-    initiate_clustering_process(comp_dist)
+    start_clustering_pipeline(comp_dist)
     
     
 

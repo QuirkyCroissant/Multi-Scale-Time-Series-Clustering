@@ -207,3 +207,23 @@ def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
     plt.savefig(filepath)
     plt.close()
     print(f"Plot saved to: {filepath}")
+
+def plot_silhouette_score(k_values, silhoutte_scores):
+    '''creates silhoutte score plot and saves it into the experiments folder'''
+    plt.figure()
+    plt.plot(k_values, silhoutte_scores, marker='o')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Silhouette Score')
+    plt.title('Silhouette Score vs. Number of Clusters')
+    plt.grid(True)
+
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "..",
+                             "experiments",
+                             "plots",
+                             "clustering",
+                             f"silhouette_score_plot_{date}.png")
+    plt.savefig(plot_path)
+    print(f"Silhouette score plot saved to: {plot_path}")
+    plt.close()

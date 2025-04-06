@@ -37,6 +37,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── logs					# log files from various experimental operations
 │      ├── interpolations
 │   ├── plots					# plot diagrams from various experimental operations
+│      ├── clustering
 │      ├── interpolations
 └│ README.md                	# Project overview and instructions
 ```

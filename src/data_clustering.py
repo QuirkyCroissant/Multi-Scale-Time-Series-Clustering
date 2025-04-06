@@ -1,7 +1,10 @@
 import config
 from project_utilities import (import_dataframe_from_csv_indexed, 
                                export_distance_matrix, 
-                               import_distance_matrix)
+                               import_distance_matrix,
+                               plot_silhouette_score)
+from sklearn_extra.cluster import KMedoids
+from sklearn.metrics import silhouette_score
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
@@ -59,8 +62,46 @@ def compute_distance_matrix(sequences: np.ndarray,
     return distance_matrix
     
 
+def initiate_clustering_computation(distance_matrix: np.ndarray, 
+                                    cluster_method=config.DEFAULT_CLUSTERING_METHOD,
+                                    k=None,
+                                    max_k=config.K_MEDOIDS_DEFAULT_MAX_CLUSTERING_AMOUNT,
+                                    save_plots=True):
+    '''Starts clustering procedure on a retrieved distance matrix applying either `kmedoid` or `hierarchical`'''
+    if cluster_method == "kmedoids":
+        if k is None:
+            print("No k provided. Optimizing k using silhoutte score...")
+            silhoutte_scores = []
+            k_values = range(2, max_k + 1)
+            
+            for curr_k in tqdm(k_values, desc="Optimizing k"):
+                model = KMedoids(n_clusters=curr_k, metric='precomputed', random_state=config.RANDOM_SEED)
+                labels = model.fit_predict(distance_matrix)
+                silhoutte_scores.append(silhouette_score(distance_matrix, labels, metric='precomputed'))
+                print(f"k={curr_k}: Silhoutte Score: {silhoutte_scores[-1]:.3f}")
+                
+            best_k = k_values[silhoutte_scores.index(max(silhoutte_scores))]
+            print(f"\nOptimal k found: {best_k}")
+            k = best_k
 
-def initiate_clustering_process(compute_dist=False, 
+            if save_plots:
+                plot_silhouette_score(k_values, silhoutte_scores)
+
+        model = KMedoids(n_clusters=k, 
+                         metric='precomputed', 
+                         random_state=config.RANDOM_SEED)
+        cluster_labels = model.fit_predict(distance_matrix)
+        return cluster_labels, model
+    
+    elif cluster_method == "hierarchical":
+        # TODO: implement hierarchical clustering
+        pass
+    else:
+        raise ValueError(f"Unsupported clustering method. {cluster_method}")
+           
+    
+
+def start_clustering_pipeline(compute_dist=False, 
                                 aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
     '''Starts the whole clustering process, passing aggregated data through a segmentation preprocessing
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
@@ -87,8 +128,13 @@ def initiate_clustering_process(compute_dist=False,
         print("Completed Dissimilarity Matrix Computation.")
 
     # TODO: Passing computed matrix into clustering logic
-    print(import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+    initiate_clustering_computation(import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                                  method=config.DEFAULT_DISSIMILARITY,
-                                 date=None))
+                                 date=None),
+                                 cluster_method=config.DEFAULT_CLUSTERING_METHOD,
+                                 k=None
+    )
+
+    #TODO visualise the labeled sequences from kmedoid
     
     
