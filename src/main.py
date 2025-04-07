@@ -1,5 +1,5 @@
 import argparse
-from data_generation import create_time_series, convert_time_series_to_dataframe
+from data_generation import create_multiple_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
 from data_clustering import start_clustering_pipeline
@@ -15,21 +15,42 @@ import os
 
 def demo_generation_pipeline():
     '''synthetic data generation pipeline'''
-    ts_data = create_time_series(config.TS_META)
-    plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
-                                       xlabel='Time(Days)', ylabel='Value')
+    series_matrix = create_multiple_time_series()
+    for i in range(series_matrix.shape[0]):
+        plot_time_series(
+        y=series_matrix[i], 
+        title=f"{config.SYN_EXPORT_TITLE}_{i}_clean", 
+        xlabel='Days', 
+        ylabel='Value'
+    )
     
-    print("Converting time series to dataframe and exporting to CSV")
+    print("Converting time series to dataframes and exporting to CSV")
 
-    syn_ts_df = convert_time_series_to_dataframe(config.TIME, ts_data)
-    export_dataframe_to_csv(syn_ts_df, config.SYN_EXPORT_DATA_NAME+"_clean")
+    syn_ts_dfs = [
+        convert_time_series_to_dataframe(series_matrix[i]) 
+        for i in range(series_matrix.shape[0])
+    ]
+
+    [
+        export_dataframe_to_csv(syn_ts_dfs[i], 
+                                filename= f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
+                                clean=True) 
+        for i in range(len(syn_ts_dfs)) 
+    ]
 
 def demo_corruption_pipeline():
-    '''corrupted data generation pipeline'''
-    clean_df = import_dataframe_from_csv_indexed(config.SYN_EXPORT_DATA_NAME+"_clean")
-    corr_df = corrupt_time_series_data(clean_df)
-    corr_df = deindex_dataframe(corr_df)
-    export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
+    '''Corrupts each individual clean time series and saves the result.'''
+    for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
+        clean_df = import_dataframe_from_csv_indexed(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean")
+        
+        corr_df = corrupt_time_series_data(clean_df)
+        corr_df = deindex_dataframe(corr_df)
+
+        export_dataframe_to_csv(corr_df, 
+                                filename=f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
+                                corrupted=True)
+
+    print("All time series have been corrupted and exported.")
 
 def aggregation_pipeline(activate_restoration=False):
     '''aggregation pipeline'''
@@ -64,7 +85,7 @@ def run_prototype(generate_data,
 
         print("Triggering corruption of synthetic dataset")
         demo_corruption_pipeline()
-    
+    """
     if plot:
         print("Generates comparisson plot of time series data")
 
@@ -117,7 +138,7 @@ def run_prototype(generate_data,
                 output_dir=output_dir
                 )
             del time_series_dict, aggregated_df
-
+        """
 
 
         

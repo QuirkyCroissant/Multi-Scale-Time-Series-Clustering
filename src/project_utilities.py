@@ -127,10 +127,27 @@ def export_logfile(values, method_name):
     
     
 
-def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME, output_dir=None):
+def export_dataframe_to_csv(df, 
+                            filename=config.SYN_EXPORT_DATA_NAME, 
+                            output_dir=None,
+                            clean=False,
+                            corrupted=False):
+    
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if output_dir is None:
-        output_dir = os.path.join(script_dir,"..", "data")
+        if clean:
+            output_dir = os.path.join(script_dir,"..", "data", "generated")
+        elif corrupted:
+            output_dir = os.path.join(script_dir,"..", "data", "corrupted")
+        else:
+            output_dir = os.path.join(script_dir,"..", "data")
+            
+    if clean:
+        filename = f"{filename}_clean"
+    elif corrupted:
+        filename = f"{filename}_corrupted"
+        
+
     filepath = os.path.join(output_dir, filename)
 
     df.to_csv(filepath, index=False, sep=';')
@@ -153,7 +170,7 @@ def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, rest
     if restored:
         output_dir = os.path.join(script_dir,"..", "data", "restored")
     else:
-        output_dir = os.path.join(script_dir,"..", "data")
+        output_dir = os.path.join(script_dir,"..", "data", "generated")
     filepath = os.path.join(output_dir, filename)
 
     df = pd.read_csv(filepath, sep=';', index_col=[0], parse_dates=[0])
@@ -162,17 +179,22 @@ def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, rest
 def deindex_dataframe(dataframe):
     return dataframe.reset_index(level=0, drop=True).reset_index().rename(columns={'Time': 'time', 'Value': 'value'})
 
-def plot_time_series(x, y, format='-', start=0, end=None,
-                     title=None, xlabel=None, ylabel=None, legend=None ):
+def plot_time_series(y, x=None, format='-', start=0, end=None,
+                     title=None, xlabel=None, ylabel=None, 
+                     legend=None, output_dir=None):
     plt.figure(figsize=(10, 6))
 
-    # differentiates between one and multiple time series to plot
-    if type(y) is tuple:
+    if x is None:
+        x = range(len(y))
+
+    if isinstance(y, (list, np.ndarray)) and y.ndim == 1:
+        plt.plot(x[start:end], y[start:end], format)
+    elif isinstance(y, tuple):
         for y_i in y:
             plt.plot(x[start:end], y_i[start:end], format)
     else:
-        plt.plot(x[start:end], y[start:end], format)
-    
+        raise ValueError("Unsupported format for y")
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
@@ -181,19 +203,18 @@ def plot_time_series(x, y, format='-', start=0, end=None,
 
     plt.title(title)
     plt.grid(True)
-    
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "plots")
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
-    # Construct the file path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if output_dir is None:
+        output_dir = os.path.join(script_dir, "..", "experiments", "plots", "generated_data")
+
     filename = f"{title}.png"
     filepath = os.path.join(output_dir, filename)
 
     plt.savefig(filepath)
     plt.close()
     print(f"Plot saved to: {filepath}")
+
 
 def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
                                 output_dir=None, 
