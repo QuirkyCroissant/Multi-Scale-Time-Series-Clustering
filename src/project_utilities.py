@@ -9,14 +9,27 @@ import os
 import re
 import json
 
+def import_restored_data_as_numpy(input_dir):
+    '''Imports the aggregated data from a given interpolated 
+    datafolder and imports it in a 2D numpy array.'''
+    all_files = sorted(os.listdir(input_dir))
+    
+    data_matrix = []
+    
+    for file in all_files:
+        current_time_series = np.loadtxt(os.path.join(input_dir,file), delimiter=';', skiprows=1, usecols=1, dtype=np.float32)
+        data_matrix.append(current_time_series)
+    
+    return np.array(data_matrix)
+    
+
 def export_distance_matrix(np_matrix, 
                            filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                            method=config.DEFAULT_DISSIMILARITY,
                            normalized=False):
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "distance_matrices")
+    output_dir = config.TO_DISTANCES_DIR
     
     if normalized:
         filename = f"{filename}_normalized_{method}_{date}"

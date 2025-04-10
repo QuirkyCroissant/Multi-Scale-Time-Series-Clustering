@@ -151,10 +151,10 @@ def run_prototype(generate_data,
                     output_dir=traverse_to_method_dir(config.TO_INTERPOLATION_PLOTS_DIR, method)
                     )
                 del time_series_dict, aggregated_df
-"""
+
     print("Triggering Clustering Pipeline")
     clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
-"""
+
 
 
         

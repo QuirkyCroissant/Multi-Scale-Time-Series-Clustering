@@ -3,7 +3,9 @@ from project_utilities import (import_dataframe_from_csv_indexed,
                                export_distance_matrix, 
                                import_distance_matrix,
                                plot_silhouette_score,
-                               plot_kmedoid_results)
+                               plot_kmedoid_results,
+                               import_restored_data_as_numpy,
+                               traverse_to_method_dir)
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
 from scipy.stats import zscore
@@ -117,16 +119,20 @@ def start_clustering_pipeline(compute_dist=False,
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
     the given distance matrix, also able to differenciate between data normalization or not.'''
     if compute_dist:
-        time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
-            config.SYN_EXPORT_DATA_NAME + '_' + aggregation_method, 
-            restored=True)
         
-        sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
+        series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
+            config.TO_AGGREGATED_DATA_DIR, 
+            aggregation_method
+        ))
+
+        print(series_matrix.shape)
+        
+        #sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
         if normalize:
-            normalized_sequence = np.apply_along_axis(zscore, 1, sequences)
-            sequences = normalized_sequence
-            
-        distance_matrix = compute_distance_matrix(sequences, 
+            normalized_series_matrix = np.apply_along_axis(zscore, 1, series_matrix)
+            series_matrix = normalized_series_matrix
+           
+        distance_matrix = compute_distance_matrix(series_matrix, 
                                                   method=config.DEFAULT_DISSIMILARITY,
                                                   normalize=normalize
                                                   )
@@ -138,17 +144,18 @@ def start_clustering_pipeline(compute_dist=False,
         print("minimum, maximum and average value")
         print(np.min(distance_matrix), np.max(distance_matrix), np.mean(distance_matrix))
         print("normalized" if normalize else "not normalized")
-
+        
         export_distance_matrix(distance_matrix, 
                                method=config.DEFAULT_DISSIMILARITY,
                                normalized=normalize
                                )
 
 
-
         print("Completed Dissimilarity Matrix Computation.")
 
     # TODO: Passing computed matrix into clustering logic
+    pass
+    """
     labels, model = initiate_clustering_computation(
         import_distance_matrix(
             filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
@@ -176,4 +183,5 @@ def start_clustering_pipeline(compute_dist=False,
                          labels, 
                          model,
                          is_normalized=normalize)
+    """
     
