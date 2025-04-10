@@ -300,48 +300,36 @@ def plot_silhouette_score(k_values, silhoutte_scores, is_normalized=False):
     print(f"Silhouette score plot saved to: {plot_path}")
     plt.close()
 
-def plot_kmedoid_results(time_series, 
-                         segmented_sequences, 
+def plot_kmedoid_results(series_matrix, 
                          labels, 
                          model, 
-                         is_normalized=False,
-                         segment_length=config.SEGMENTATION_WINDOW):
+                         is_normalized=False):
 
     n_clusters = len(np.unique(labels))
     colors = plt.cm.get_cmap("tab10", n_clusters)
-    hours = np.arange(segment_length)
+    series_length = series_matrix.shape[1]
+    time_axis = np.arange(series_length)
+    
 
     _, axs = plt.subplots(2, 1, figsize=(14, 8), gridspec_kw={'height_ratios': [3, 1]})
 
     ### Full Time Series coloured by cluster ###
-    for i, label in enumerate(labels):
-        start = i * segment_length
-        end = start + segment_length
-        if end > len(time_series):
-            break
-        segment = time_series[start:end]
-        axs[0].plot(range(start, end), segment, color=colors(label), linewidth=0.8)
-    
-    if is_normalized:
-        plot_header = "Full Time Series with Segments Colored by Cluster (Normalized)"
-    else:
-        plot_header = "Full Time Series with Segments Colored by Cluster"
+    for idx, (series, label) in enumerate(zip(series_matrix,labels)):
+        axs[0].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
 
-    axs[0].set_title(plot_header)
-    axs[0].set_xlabel("Time (Hours or Days)")
+    axs[0].set_title("Full Time Series Colored by Cluster" + (" (Normalized)" if is_normalized else ""))
+    axs[0].set_xlabel("Time (Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
 
 
-    ### Medoid sequences ###
-    for i, idx in enumerate(model.medoid_indices_):
-        axs[1].plot(hours, segmented_sequences[idx], label=f"Medoid {i}", color=colors(i), linewidth=2.5)
+    ### Cluster Medoids  ###
+    for cluster_id, medoid_idx in enumerate(model.medoid_indices_):
+        axs[1].plot(time_axis, series_matrix[medoid_idx], label=f"Medoid {cluster_id}", 
+                    color=colors(cluster_id), linewidth=2.5)
 
-    axs[1].set_title("Cluster Medoid Profiles (Normalized)" 
-                     if is_normalized else 
-                     "Cluster Medoid Profiles"
-                     )
-    axs[1].set_xlabel("Hour of Day")
+    axs[1].set_title(f"Cluster Medoid Profiles" + (" (Normalized)" if is_normalized else ""))
+    axs[1].set_xlabel("Time(Days)")
     axs[1].set_ylabel("Value")
     axs[1].legend()
     axs[1].grid(True)
@@ -349,19 +337,15 @@ def plot_kmedoid_results(time_series,
 
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    if is_normalized:
-        filename = f"kmedoid_results_plot_normalized_{date}.png"
-    else:
-        filename = f"kmedoid_results_plot_raw_{date}.png"
+    filename = f"kmedoid_multiseries_plot_{'normalized' if is_normalized else 'raw'}_{date}.png"
         
 
     plot_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..", "experiments", "plots", "clustering",
+        config.TO_CLUSTERING_PLOTS_DIR,
         filename
     )
 
     plt.tight_layout()
     plt.savefig(plot_path)
     plt.close()
-    print(f"Combined clustering plot saved to: {plot_path}")
+    print(f"Multi-series clustering plot saved to: {plot_path}")

@@ -125,8 +125,6 @@ def start_clustering_pipeline(compute_dist=False,
             config.TO_AGGREGATED_DATA_DIR, 
             aggregation_method
         ))
-
-        print(series_matrix.shape)
         
         #sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
         if normalize:
@@ -171,19 +169,18 @@ def start_clustering_pipeline(compute_dist=False,
     print("Cluster assignments:", labels)
 
     #TODO visualise the labeled sequences from kmedoid
-    """
-    time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
-            config.SYN_EXPORT_DATA_NAME + '_' + aggregation_method, 
-            restored=True)
+    
+    series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
+            config.TO_AGGREGATED_DATA_DIR, 
+            aggregation_method
+        ))
         
-    segmented_seq = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
     if normalize:
-        normalized_sequence = np.apply_along_axis(zscore, 1, segmented_seq)
-        segmented_seq = normalized_sequence
+            normalized_series_matrix = np.apply_along_axis(zscore, 1, series_matrix)
+            series_matrix = normalized_series_matrix
 
-    plot_kmedoid_results(time_series_data, 
-                         segmented_seq, 
+    plot_kmedoid_results(series_matrix,
                          labels, 
                          model,
-                         is_normalized=normalize)
-    """
+                         normalize)
+    
