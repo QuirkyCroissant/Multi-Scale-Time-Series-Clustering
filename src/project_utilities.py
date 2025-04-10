@@ -87,37 +87,42 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
     
 
 
-def compute_and_save_accuracy(df, method_name):
+def compute_and_save_accuracy(df, method_name, 
+                              series_id=0, 
+                              time_difference=0):
     '''Computes the accuracy of how similar the given dataset to the uncorrupted 
     synthetic dataset is. After computation if prints out the result and exports 
     it into the log files in the experiments folder.'''
-    ts_demo_data_clean = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-    #df = deindex_dataframe(df)
+    ts_demo_data_clean = import_dataframe_from_csv(
+        filename=f"{config.SYN_EXPORT_DATA_NAME}_{series_id}_clean",
+        input_dir=config.TO_CLEAN_DATA_DIR
+        )
+    
     values = []
-    mse_value = mean_squared_error(ts_demo_data_clean['Value'], df['value'])
+    mse_value = mean_squared_error(ts_demo_data_clean['value'], df['value'])
     print(f"The Mean-Squared-Error(MSE) for using the {method_name}-method is: \n{mse_value}")
     values.append(mse_value)
     
-    mape_value = mean_absolute_percentage_error(ts_demo_data_clean['Value'], df['value'])
+    mape_value = mean_absolute_percentage_error(ts_demo_data_clean['value'], df['value'])
     print(f"The Mean-Absolute-Percentage-Error(MAPE) for using the {method_name}-method is: \n{mape_value}")
     values.append(mape_value)
 
-    export_logfile(values, method_name)
+    export_logfile(values, method_name, series_id, time_difference)
 
     
-def export_logfile(values, method_name):
+def export_logfile(values, method_name, series_id, time_difference):
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "logs", "interpolations")
+    output_dir = config.TO_INTERPOLATION_LOGS_DIR
     
-    filename = os.path.join(output_dir, f"accuracy_log_{method_name}_{date}.json")
+    filename = os.path.join(output_dir, method_name, f"accuracy_log_ts_{series_id}_{method_name}_{date}.json")
     
     with open(filename, "w", encoding='utf-8') as f: 
-        json.dump({"method": method_name, 
-                   "mse": values[0], 
-                   "mape": values[-1], 
-                   "date": date
+        json.dump({"methodName": method_name, 
+                   "mseScore": values[0], 
+                   "mapeScore": values[-1], 
+                   "executionDate": date,
+                   "interpolationTime": time_difference
                    }, 
                   f, 
                   ensure_ascii=False, 
@@ -153,26 +158,31 @@ def export_dataframe_to_csv(df,
     df.to_csv(filepath, index=False, sep=';')
     print(f"DataFrame exported to: {filepath}")
     
+def traverse_to_method_dir(traversal_string, method_name):
+    '''Method that retrieves the precise subdirectory for paths that also use the interpolation methods'''
+    return os.path.join(traversal_string, method_name)
+
 def import_dataframe_from_csv(filename=config.SYN_EXPORT_DATA_NAME, input_dir=None):
     '''imports time series dataframe from csv without indexing'''
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
     if input_dir is None:
-        input_dir = os.path.join(script_dir,"..", "data")
+        input_dir = config.TO_CLEAN_DATA_DIR
     filepath = os.path.join(input_dir, filename)
 
     df = pd.read_csv(filepath, sep=';')
     return df
     
-def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, restored=False):
+def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, input_dir=None, restored=False):
     '''imports time series dataframe from csv and indexes the time column, 
     in order to leverage powerful and efficient DateTimeIndex functionality from pandas library'''
     
-    if restored:
-        output_dir = config.TO_AGGREGATED_DATA_DIR
-    else:
-        output_dir = config.TO_CLEAN_DATA_DIR
+    if input_dir is None:
+        if restored:
+            input_dir = config.TO_AGGREGATED_DATA_DIR
+        else:
+            input_dir = config.TO_CLEAN_DATA_DIR
         
-    filepath = os.path.join(output_dir, filename)
+    filepath = os.path.join(input_dir, filename)
 
     df = pd.read_csv(filepath, sep=';', index_col=[0], parse_dates=[0])
     return df

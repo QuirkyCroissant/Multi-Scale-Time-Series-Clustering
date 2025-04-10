@@ -28,7 +28,7 @@ def noise(time, noise_level=1, seed=None):
     rnd = np.random.RandomState(seed)
     return rnd.randn(len(time)) * noise_level
     
-def convert_time_series_to_dataframe(ts_series: np.ndarray, start_date="2023-01-01"):
+def convert_time_series_to_dataframe(ts_series: np.ndarray, start_date=config.TIME_SERIES_START_DATE):
     '''Converts a 1D time series array into a dataframe with daily datetime index'''
 
     n_points = len(ts_series)

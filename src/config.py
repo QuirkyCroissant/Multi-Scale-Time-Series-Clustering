@@ -41,6 +41,8 @@ SYN_SERIES_PROFILES = {
 }
 
 PERIOD_LENGTH = 365
+TIME_SERIES_START_DATE = "2023-01-01"
+
 
 
 # (POTENTIALLY OBSOLETE) Constants that are controlling the time series data generation for the prototype
@@ -61,7 +63,7 @@ TO_CORRUPTED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "corrupted")
 TO_AGGREGATED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "restored")
 
 TO_DISTANCES_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "distance_matrices")
-TO_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs")
+TO_INTERPOLATION_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "interpolations")
 
 
 TO_CLEAN_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "generated_data")
