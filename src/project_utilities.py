@@ -57,12 +57,7 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
         else:
             filename_without_date = f"{filename}_raw_{method}_"
 
-        dir_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "experiments", 
-            "distance_matrices"
-        )
+        dir_path = config.TO_DISTANCES_DIR
         
         all_files = os.listdir(dir_path)
         matching_files = []
@@ -88,10 +83,7 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
         else:
             filename_with_date = f"{filename}_raw_{method}_{date}.npy"
 
-        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                                "..", 
-                                "experiments", 
-                                "distance_matrices", 
+        filepath = os.path.join(config.TO_DISTANCES_DIR, 
                                 filename_with_date)
     
     print(f"Loaded distance matrix from: {filepath}")

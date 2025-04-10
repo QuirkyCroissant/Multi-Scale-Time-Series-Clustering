@@ -83,7 +83,8 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
         if k is None:
             print("No k provided. Optimizing k using silhoutte score...")
             silhoutte_scores = []
-            k_values = range(2, max_k + 1)
+            max_allowed_k = min(max_k, distance_matrix.shape[0] - 1)
+            k_values = range(2, max_allowed_k + 1)
             
             for curr_k in tqdm(k_values, desc="Optimizing k"):
                 model = KMedoids(n_clusters=curr_k, metric='precomputed', random_state=config.RANDOM_SEED)
@@ -154,8 +155,8 @@ def start_clustering_pipeline(compute_dist=False,
         print("Completed Dissimilarity Matrix Computation.")
 
     # TODO: Passing computed matrix into clustering logic
-    pass
-    """
+    
+    
     labels, model = initiate_clustering_computation(
         import_distance_matrix(
             filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
@@ -167,8 +168,10 @@ def start_clustering_pipeline(compute_dist=False,
             is_normalized=normalize
     )
 
+    print("Cluster assignments:", labels)
+
     #TODO visualise the labeled sequences from kmedoid
-    
+    """
     time_series_data: pd.DataFrame = import_dataframe_from_csv_indexed(
             config.SYN_EXPORT_DATA_NAME + '_' + aggregation_method, 
             restored=True)
@@ -184,4 +187,3 @@ def start_clustering_pipeline(compute_dist=False,
                          model,
                          is_normalized=normalize)
     """
-    
