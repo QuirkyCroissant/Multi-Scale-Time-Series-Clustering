@@ -35,7 +35,7 @@ def convert_time_series_to_dataframe(ts_series: np.ndarray, start_date="2023-01-
     date_index = pd.date_range(start=start_date, periods=n_points, freq="D")
 
     return  pd.DataFrame(
-        {"Time": date_index,"Value": ts_series}
+        {"time": date_index,"value": ts_series}
     )
     
 def create_individual_time_series(time, 

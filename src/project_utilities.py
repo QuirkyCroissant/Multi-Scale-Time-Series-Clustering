@@ -166,18 +166,19 @@ def import_dataframe_from_csv(filename=config.SYN_EXPORT_DATA_NAME, input_dir=No
 def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, restored=False):
     '''imports time series dataframe from csv and indexes the time column, 
     in order to leverage powerful and efficient DateTimeIndex functionality from pandas library'''
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
     if restored:
-        output_dir = os.path.join(script_dir,"..", "data", "restored")
+        output_dir = config.TO_AGGREGATED_DATA_DIR
     else:
-        output_dir = os.path.join(script_dir,"..", "data", "generated")
+        output_dir = config.TO_CLEAN_DATA_DIR
+        
     filepath = os.path.join(output_dir, filename)
 
     df = pd.read_csv(filepath, sep=';', index_col=[0], parse_dates=[0])
     return df
     
 def deindex_dataframe(dataframe):
-    return dataframe.reset_index(level=0, drop=True).reset_index().rename(columns={'Time': 'time', 'Value': 'value'})
+    return dataframe.reset_index()
 
 def plot_time_series(y, x=None, format='-', start=0, end=None,
                      title=None, xlabel=None, ylabel=None, 
@@ -187,7 +188,14 @@ def plot_time_series(y, x=None, format='-', start=0, end=None,
     if x is None:
         x = range(len(y))
 
-    if isinstance(y, (list, np.ndarray)) and y.ndim == 1:
+    if isinstance(y, pd.DataFrame):
+        if "time" in y.columns and "value" in y.columns:
+            x = y["time"]
+            y = y["value"]
+        else:
+            raise ValueError("DataFrame must contain 'time' and 'value' columns.")
+
+    if isinstance(y, (list, np.ndarray, pd.Series)) and (not hasattr(y, 'ndim') or y.ndim == 1):
         plt.plot(x[start:end], y[start:end], format)
     elif isinstance(y, tuple):
         for y_i in y:
@@ -219,7 +227,7 @@ def plot_time_series(y, x=None, format='-', start=0, end=None,
 def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
                                 output_dir=None, 
                                 xlabel="Time", ylabel="Value", fmt='-', 
-                                freq='H'):
+                                freq='D'):
     '''Plots time series and exports the image, is possible to compare multiple series.'''
 
     plt.figure(figsize=(10, 6))

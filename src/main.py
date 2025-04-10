@@ -10,7 +10,6 @@ import config
 
 import numpy as np
 import pandas as pd
-import os
 
 
 def demo_generation_pipeline():
@@ -18,11 +17,11 @@ def demo_generation_pipeline():
     series_matrix = create_multiple_time_series()
     for i in range(series_matrix.shape[0]):
         plot_time_series(
-        y=series_matrix[i], 
-        title=f"{config.SYN_EXPORT_TITLE}_{i}_clean", 
-        xlabel='Days', 
-        ylabel='Value'
-    )
+            y=series_matrix[i], 
+            title=f"{config.SYN_EXPORT_TITLE}_{i}_clean", 
+            xlabel='Days', 
+            ylabel='Value'
+        )
     
     print("Converting time series to dataframes and exporting to CSV")
 
@@ -34,7 +33,7 @@ def demo_generation_pipeline():
     [
         export_dataframe_to_csv(syn_ts_dfs[i], 
                                 filename= f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
-                                clean=True) 
+                                clean=True, output_dir=config.TO_CLEAN_DATA_DIR) 
         for i in range(len(syn_ts_dfs)) 
     ]
 
@@ -42,13 +41,23 @@ def demo_corruption_pipeline():
     '''Corrupts each individual clean time series and saves the result.'''
     for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
         clean_df = import_dataframe_from_csv_indexed(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean")
-        
+
         corr_df = corrupt_time_series_data(clean_df)
         corr_df = deindex_dataframe(corr_df)
 
         export_dataframe_to_csv(corr_df, 
                                 filename=f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
-                                corrupted=True)
+                                corrupted=True, 
+                                output_dir=config.TO_CORRUPTED_DATA_DIR
+                                )
+        
+        plot_time_series(
+            y=corr_df, 
+            title=f"{config.SYN_EXPORT_TITLE}_{i}_corrupted", 
+            xlabel='Days', 
+            ylabel='Value',
+            output_dir=config.TO_CORRUPTED_DATA_PLOTS_DIR
+        )
 
     print("All time series have been corrupted and exported.")
 
@@ -85,26 +94,34 @@ def run_prototype(generate_data,
 
         print("Triggering corruption of synthetic dataset")
         demo_corruption_pipeline()
-    """
-    if plot:
-        print("Generates comparisson plot of time series data")
-
-        clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-        corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
-
-        clean_df["Time"] = pd.to_datetime(clean_df["Time"])
-        corr_df["time"] = pd.to_datetime(corr_df["time"])
-
-        # Create a dictionary with one key-value pair:
-        # The key is a label, and the value is a tuple of the time and value columns.
-        time_series_dict = {
-            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-            "Corrupted_TS": (corr_df["time"], corr_df["value"])
-            }
-
-        plot_time_series_comparison(time_series_dict)
-        del time_series_dict
     
+    if plot:
+        print("Generating comparisson plots for all synthetic time series data")
+
+        for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
+
+            clean_df = import_dataframe_from_csv(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean",
+                                                 input_dir=config.TO_CLEAN_DATA_DIR)
+            corr_df = import_dataframe_from_csv(f"{config.SYN_EXPORT_DATA_NAME}_{i}_corrupted",
+                                                input_dir=config.TO_CORRUPTED_DATA_DIR)
+
+            clean_df["time"] = pd.to_datetime(clean_df["time"])
+            corr_df["time"] = pd.to_datetime(corr_df["time"])
+
+            # Create a dictionary with one key-value pair:
+            # The key is a label, and the value is a tuple of the time and value columns.
+            time_series_dict = {
+                f"Clean_TS_{i}": (clean_df["time"], clean_df["value"]),
+                f"Corrupted_TS_{i}": (corr_df["time"], corr_df["value"])
+                }
+
+            plot_time_series_comparison(
+                time_series_dict,
+                title=f"{config.SYN_EXPORT_TITLE}_Comparison_{i}",
+                output_dir=config.TO_COMPARISON_PLOTS_DIR
+            )
+            del time_series_dict
+    """
     print("Triggering Aggregation Pipeline")
     aggregation_pipeline(restore)
 

@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 # defines how many time series should be generated for the synthetic data sets
 AMOUNT_OF_INDIVIDUAL_SERIES = 10
@@ -51,6 +52,27 @@ SYN_EXPORT_DATA_NAME = "ts_demo_data"
 RANDOM_SEED = 69
 
 
+#### Traversal Paths for I/O operations
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+TO_CLEAN_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "generated")
+TO_CORRUPTED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "corrupted")
+TO_AGGREGATED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "restored")
+
+TO_DISTANCES_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "distance_matrices")
+TO_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs")
+
+
+TO_CLEAN_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "generated_data")
+TO_CORRUPTED_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "corrupted_data")
+TO_COMPARISON_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "comparisons")
+
+TO_INTERPOLATION_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "interpolations")
+TO_CLUSTERING_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "clustering")
+
+
+
 #### corruption parameters
 
 CORRUPTION_PROBS = {
@@ -58,6 +80,8 @@ CORRUPTION_PROBS = {
     "partial": 0.30,      # chance to randomly delete some hours
     "reduce": 0.30        # chance to fully reduce to a single measurement
 }
+
+DAILY_CORRUPTION_RATE = 0.15
 
 
 #### restoration parameters
