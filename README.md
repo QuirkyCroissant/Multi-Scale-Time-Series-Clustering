@@ -2,16 +2,40 @@
 
 > Time-series data is a collection of data points recorded over time, each associated with a specific timestamp. This form of data is prevalent in various fields such as finance, economics, meteorology, healthcare, energy, telecommunications, and transportation. Current algorithms assume that we only have time-series data of the same scaling, but in real-world data time-series often consists of different scalings, e.g. hourly, daily, or weekly weather forecasts. This project will mainly focus on the development of a clustering algorithm that can handle time series with different scalings. 
 
-## 📌 Methodology Update – 7 April 2025
+## Table of Contents
 
-This project has transitioned from segment-based time series clustering (1 series split into daily windows)
-to clustering **multiple full-length time series** (e.g., one per subject).  
-This aligns with the structure of the potential upcoming real dataset (prod) and the revised thesis scope.
+- [Multi Scale Time Series Clustering](#multi-scale-time-series-clustering)
+  - [Methodology](#methodology)
+  - [Overview](#overview)
+  - [Objectives](#objectives)
+  - [Project Structure](#project-structure)
+  - [Installation/Usage](#installationusage)
+    - Clone the repository
+    - Create and activate a virtual environment
+    - Install dependencies
+    - Run the project
+    - Available Command-Line Flags
+  - [Application Runtime Workflow](#application-runtime-workflow)
+  - [Legacy](#legacy)
+  - [License](#license)
+  - [Contact & Acknowledgements](#contact--acknowledgements)
 
-The previous approach is saved as a stable prototype under commit:  
+
+## Methodology
+
+This project implements clustering of time-series data with varying temporal scales.
+Initially, the system focused on segment-based clustering of a single time series (e.g., per-day analysis). 
+
+As of **early April 2025**, the methodology has been extended to support clustering across **multiple full-length time series** (e.g., one per subject). This better reflects realistic energy datasets and supports broader comparison-based clustering.
+
+The older version of the code is preserved at the commit tagged:
+
 `feat(prototype): final version of segment-based clustering`
 
-This branch reflects the updated design and will become the new main branch once stabilized.
+And the new implementation is tagged:
+
+`prototype-v2: finalized multiseries clustering support`
+
 
 
 ## Overview
@@ -30,12 +54,37 @@ This repository contains code and documentation for my bachelor thesis on cluste
 ```
 .
 ├│ data/                  		# Sample datasets or links to data sources
-│   ├── ts_demo_data_clean.csv  # Synthetical demo data (prototype mode)
-│   ├── ts_demo_data_corrupted.csv  	# modified faulty data (prototype mode)
-│   ├── restored/  				# restored data by multiple means(e.g.: interpolation)
-│      ├── ts_demo_data_<method>.csv  	# restored data through interpolation method
+│   ├── corrupted/  	        # Holds modified faulty series (prototype mode)
+│      ├── ts_demo_data_<#>_corrupted
+│      ├── ...
+│   ├── generated/              # Multiple synthetically created demo series (prototype mode)
+│      ├── ts_demo_data_<#>_clean
+│      ├── ...
+│   ├── legacy/  				# Holds deprecated prototype data
+│   ├── restored/  				# Restored data by multiple means(e.g.: interpolation)
+│      ├── <method>/            # Restored data through interpolation method
+│            ├── ts_demo_data_<#>_<method> 
+│            ├── ...
 │      ├── ... 
 ├│ docs/                  		# Documentation and thesis drafts
+├│ experiments/             	# Scripts and logs from experimental runs
+│   ├── distance_matrices		# Exported dissimilarity/distance matrices used for clustering
+│      ├── legacy/              # Deprecated distance matrices
+│   ├── logs					# Log files from various experimental operations
+│      ├── interpolations
+│      ├── legacy/              # Deprecated log files
+│   ├── plots					# Plot diagrams from various experimental operations
+│      ├── clustering/
+│            ├── legacy/              # Deprecated plot diagrams
+│            ├── ...
+│      ├── comparisons/
+│      ├── corrupted_data/
+│      ├── generated_data/
+│      ├── interpolations/
+│            ├── <method>/
+│            ├── legacy/              
+|            ├── ...
+│      ├── legacy/
 ├│ notebooks/					# Jupyter notebooks for exploratory analysis
 ├│ src/							# Source code (algorithms, utility functions)
 │   ├── config.py  				# Stores essential parameters and constants
@@ -44,13 +93,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── data_restoration.py  	# Module for the restoration of data through various means
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project
-├│ experiments/             	# Scripts and logs from experimental runs
-│   ├── distance_matrices		# exported dissimilarity/distance matrices used for clustering
-│   ├── logs					# log files from various experimental operations
-│      ├── interpolations
-│   ├── plots					# plot diagrams from various experimental operations
-│      ├── clustering
-│      ├── interpolations
+└│ CHANGELOG.md                	# Documents releases and changes 
 └│ README.md                	# Project overview and instructions
 ```
 
@@ -82,7 +125,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
     Run the application by specifying the mode and additional optional flags:
     
     ```bash
-    # For demo (prototype) mode with new synthetic data and various plots:
+    # For demo (prototype) mode with new synthetic data and various plots(without normalization):
     python src/main.py --mode demo --new_data --comp_img
     
     # For production mode:
@@ -104,6 +147,8 @@ The flowchart below summarizes the main pipelines of the project:
 ![Application Flowchart](docs/runtime_flowchart.png)
 *Figure: Overall Projects Pipeline Flowchart*
 
+## Legacy
+Legacy prototype available under [prototype-v1](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v1)
 
 ## License
 
