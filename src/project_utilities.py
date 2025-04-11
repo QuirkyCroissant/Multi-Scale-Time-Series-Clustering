@@ -9,14 +9,27 @@ import os
 import re
 import json
 
+def import_restored_data_as_numpy(input_dir):
+    '''Imports the aggregated data from a given interpolated 
+    datafolder and imports it in a 2D numpy array.'''
+    all_files = sorted(os.listdir(input_dir))
+    
+    data_matrix = []
+    
+    for file in all_files:
+        current_time_series = np.loadtxt(os.path.join(input_dir,file), delimiter=';', skiprows=1, usecols=1, dtype=np.float32)
+        data_matrix.append(current_time_series)
+    
+    return np.array(data_matrix)
+    
+
 def export_distance_matrix(np_matrix, 
                            filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                            method=config.DEFAULT_DISSIMILARITY,
                            normalized=False):
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "distance_matrices")
+    output_dir = config.TO_DISTANCES_DIR
     
     if normalized:
         filename = f"{filename}_normalized_{method}_{date}"
@@ -44,12 +57,7 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
         else:
             filename_without_date = f"{filename}_raw_{method}_"
 
-        dir_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "experiments", 
-            "distance_matrices"
-        )
+        dir_path = config.TO_DISTANCES_DIR
         
         all_files = os.listdir(dir_path)
         matching_files = []
@@ -75,10 +83,7 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
         else:
             filename_with_date = f"{filename}_raw_{method}_{date}.npy"
 
-        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                                "..", 
-                                "experiments", 
-                                "distance_matrices", 
+        filepath = os.path.join(config.TO_DISTANCES_DIR, 
                                 filename_with_date)
     
     print(f"Loaded distance matrix from: {filepath}")
@@ -87,37 +92,42 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
     
 
 
-def compute_and_save_accuracy(df, method_name):
+def compute_and_save_accuracy(df, method_name, 
+                              series_id=0, 
+                              time_difference=0):
     '''Computes the accuracy of how similar the given dataset to the uncorrupted 
     synthetic dataset is. After computation if prints out the result and exports 
     it into the log files in the experiments folder.'''
-    ts_demo_data_clean = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-    #df = deindex_dataframe(df)
+    ts_demo_data_clean = import_dataframe_from_csv(
+        filename=f"{config.SYN_EXPORT_DATA_NAME}_{series_id}_clean",
+        input_dir=config.TO_CLEAN_DATA_DIR
+        )
+    
     values = []
-    mse_value = mean_squared_error(ts_demo_data_clean['Value'], df['value'])
+    mse_value = mean_squared_error(ts_demo_data_clean['value'], df['value'])
     print(f"The Mean-Squared-Error(MSE) for using the {method_name}-method is: \n{mse_value}")
     values.append(mse_value)
     
-    mape_value = mean_absolute_percentage_error(ts_demo_data_clean['Value'], df['value'])
+    mape_value = mean_absolute_percentage_error(ts_demo_data_clean['value'], df['value'])
     print(f"The Mean-Absolute-Percentage-Error(MAPE) for using the {method_name}-method is: \n{mape_value}")
     values.append(mape_value)
 
-    export_logfile(values, method_name)
+    export_logfile(values, method_name, series_id, time_difference)
 
     
-def export_logfile(values, method_name):
+def export_logfile(values, method_name, series_id, time_difference):
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "logs", "interpolations")
+    output_dir = config.TO_INTERPOLATION_LOGS_DIR
     
-    filename = os.path.join(output_dir, f"accuracy_log_{method_name}_{date}.json")
+    filename = os.path.join(output_dir, method_name, f"accuracy_log_ts_{series_id}_{method_name}_{date}.json")
     
     with open(filename, "w", encoding='utf-8') as f: 
-        json.dump({"method": method_name, 
-                   "mse": values[0], 
-                   "mape": values[-1], 
-                   "date": date
+        json.dump({"methodName": method_name, 
+                   "mseScore": values[0], 
+                   "mapeScore": values[-1], 
+                   "executionDate": date,
+                   "interpolationTime": time_difference
                    }, 
                   f, 
                   ensure_ascii=False, 
@@ -127,52 +137,87 @@ def export_logfile(values, method_name):
     
     
 
-def export_dataframe_to_csv(df, filename=config.SYN_EXPORT_DATA_NAME, output_dir=None):
+def export_dataframe_to_csv(df, 
+                            filename=config.SYN_EXPORT_DATA_NAME, 
+                            output_dir=None,
+                            clean=False,
+                            corrupted=False):
+    
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if output_dir is None:
-        output_dir = os.path.join(script_dir,"..", "data")
+        if clean:
+            output_dir = os.path.join(script_dir,"..", "data", "generated")
+        elif corrupted:
+            output_dir = os.path.join(script_dir,"..", "data", "corrupted")
+        else:
+            output_dir = os.path.join(script_dir,"..", "data")
+            
+    if clean:
+        filename = f"{filename}_clean"
+    elif corrupted:
+        filename = f"{filename}_corrupted"
+        
+
     filepath = os.path.join(output_dir, filename)
 
     df.to_csv(filepath, index=False, sep=';')
     print(f"DataFrame exported to: {filepath}")
     
+def traverse_to_method_dir(traversal_string, method_name):
+    '''Method that retrieves the precise subdirectory for paths that also use the interpolation methods'''
+    return os.path.join(traversal_string, method_name)
+
 def import_dataframe_from_csv(filename=config.SYN_EXPORT_DATA_NAME, input_dir=None):
     '''imports time series dataframe from csv without indexing'''
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
     if input_dir is None:
-        input_dir = os.path.join(script_dir,"..", "data")
+        input_dir = config.TO_CLEAN_DATA_DIR
     filepath = os.path.join(input_dir, filename)
 
     df = pd.read_csv(filepath, sep=';')
     return df
     
-def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, restored=False):
+def import_dataframe_from_csv_indexed(filename=config.SYN_EXPORT_DATA_NAME, input_dir=None, restored=False):
     '''imports time series dataframe from csv and indexes the time column, 
     in order to leverage powerful and efficient DateTimeIndex functionality from pandas library'''
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    if restored:
-        output_dir = os.path.join(script_dir,"..", "data", "restored")
-    else:
-        output_dir = os.path.join(script_dir,"..", "data")
-    filepath = os.path.join(output_dir, filename)
+    
+    if input_dir is None:
+        if restored:
+            input_dir = config.TO_AGGREGATED_DATA_DIR
+        else:
+            input_dir = config.TO_CLEAN_DATA_DIR
+        
+    filepath = os.path.join(input_dir, filename)
 
     df = pd.read_csv(filepath, sep=';', index_col=[0], parse_dates=[0])
     return df
     
 def deindex_dataframe(dataframe):
-    return dataframe.reset_index(level=0, drop=True).reset_index().rename(columns={'Time': 'time', 'Value': 'value'})
+    return dataframe.reset_index()
 
-def plot_time_series(x, y, format='-', start=0, end=None,
-                     title=None, xlabel=None, ylabel=None, legend=None ):
+def plot_time_series(y, x=None, format='-', start=0, end=None,
+                     title=None, xlabel=None, ylabel=None, 
+                     legend=None, output_dir=None):
     plt.figure(figsize=(10, 6))
 
-    # differentiates between one and multiple time series to plot
-    if type(y) is tuple:
+    if x is None:
+        x = range(len(y))
+
+    if isinstance(y, pd.DataFrame):
+        if "time" in y.columns and "value" in y.columns:
+            x = y["time"]
+            y = y["value"]
+        else:
+            raise ValueError("DataFrame must contain 'time' and 'value' columns.")
+
+    if isinstance(y, (list, np.ndarray, pd.Series)) and (not hasattr(y, 'ndim') or y.ndim == 1):
+        plt.plot(x[start:end], y[start:end], format)
+    elif isinstance(y, tuple):
         for y_i in y:
             plt.plot(x[start:end], y_i[start:end], format)
     else:
-        plt.plot(x[start:end], y[start:end], format)
-    
+        raise ValueError("Unsupported format for y")
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
@@ -181,13 +226,11 @@ def plot_time_series(x, y, format='-', start=0, end=None,
 
     plt.title(title)
     plt.grid(True)
-    
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir,"..", "experiments", "plots")
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
-    # Construct the file path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if output_dir is None:
+        output_dir = os.path.join(script_dir, "..", "experiments", "plots", "generated_data")
+
     filename = f"{title}.png"
     filepath = os.path.join(output_dir, filename)
 
@@ -195,10 +238,11 @@ def plot_time_series(x, y, format='-', start=0, end=None,
     plt.close()
     print(f"Plot saved to: {filepath}")
 
+
 def plot_time_series_comparison(series_dict, title="TimeSeries_Plot",
                                 output_dir=None, 
                                 xlabel="Time", ylabel="Value", fmt='-', 
-                                freq='H'):
+                                freq='D'):
     '''Plots time series and exports the image, is possible to compare multiple series.'''
 
     plt.figure(figsize=(10, 6))
@@ -256,48 +300,36 @@ def plot_silhouette_score(k_values, silhoutte_scores, is_normalized=False):
     print(f"Silhouette score plot saved to: {plot_path}")
     plt.close()
 
-def plot_kmedoid_results(time_series, 
-                         segmented_sequences, 
+def plot_kmedoid_results(series_matrix, 
                          labels, 
                          model, 
-                         is_normalized=False,
-                         segment_length=config.SEGMENTATION_WINDOW):
+                         is_normalized=False):
 
     n_clusters = len(np.unique(labels))
     colors = plt.cm.get_cmap("tab10", n_clusters)
-    hours = np.arange(segment_length)
+    series_length = series_matrix.shape[1]
+    time_axis = np.arange(series_length)
+    
 
     _, axs = plt.subplots(2, 1, figsize=(14, 8), gridspec_kw={'height_ratios': [3, 1]})
 
     ### Full Time Series coloured by cluster ###
-    for i, label in enumerate(labels):
-        start = i * segment_length
-        end = start + segment_length
-        if end > len(time_series):
-            break
-        segment = time_series[start:end]
-        axs[0].plot(range(start, end), segment, color=colors(label), linewidth=0.8)
-    
-    if is_normalized:
-        plot_header = "Full Time Series with Segments Colored by Cluster (Normalized)"
-    else:
-        plot_header = "Full Time Series with Segments Colored by Cluster"
+    for idx, (series, label) in enumerate(zip(series_matrix,labels)):
+        axs[0].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
 
-    axs[0].set_title(plot_header)
-    axs[0].set_xlabel("Time (Hours or Days)")
+    axs[0].set_title("Full Time Series Colored by Cluster" + (" (Normalized)" if is_normalized else ""))
+    axs[0].set_xlabel("Time (Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
 
 
-    ### Medoid sequences ###
-    for i, idx in enumerate(model.medoid_indices_):
-        axs[1].plot(hours, segmented_sequences[idx], label=f"Medoid {i}", color=colors(i), linewidth=2.5)
+    ### Cluster Medoids  ###
+    for cluster_id, medoid_idx in enumerate(model.medoid_indices_):
+        axs[1].plot(time_axis, series_matrix[medoid_idx], label=f"Medoid {cluster_id}", 
+                    color=colors(cluster_id), linewidth=2.5)
 
-    axs[1].set_title("Cluster Medoid Profiles (Normalized)" 
-                     if is_normalized else 
-                     "Cluster Medoid Profiles"
-                     )
-    axs[1].set_xlabel("Hour of Day")
+    axs[1].set_title(f"Cluster Medoid Profiles" + (" (Normalized)" if is_normalized else ""))
+    axs[1].set_xlabel("Time(Days)")
     axs[1].set_ylabel("Value")
     axs[1].legend()
     axs[1].grid(True)
@@ -305,19 +337,15 @@ def plot_kmedoid_results(time_series,
 
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    if is_normalized:
-        filename = f"kmedoid_results_plot_normalized_{date}.png"
-    else:
-        filename = f"kmedoid_results_plot_raw_{date}.png"
+    filename = f"kmedoid_multiseries_plot_{'normalized' if is_normalized else 'raw'}_{date}.png"
         
 
     plot_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..", "experiments", "plots", "clustering",
+        config.TO_CLUSTERING_PLOTS_DIR,
         filename
     )
 
     plt.tight_layout()
     plt.savefig(plot_path)
     plt.close()
-    print(f"Combined clustering plot saved to: {plot_path}")
+    print(f"Multi-series clustering plot saved to: {plot_path}")

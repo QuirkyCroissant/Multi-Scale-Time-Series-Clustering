@@ -1,4 +1,0 @@
-The Mean-Squared-Error(MSE) for using the cubicspline-method is: 
-300.678132468791
-The Mean-Absolute-Percentage-Error(MAPE) for using the cubicspline-method is: 
-0.9041288894377141

@@ -2,6 +2,18 @@
 
 > Time-series data is a collection of data points recorded over time, each associated with a specific timestamp. This form of data is prevalent in various fields such as finance, economics, meteorology, healthcare, energy, telecommunications, and transportation. Current algorithms assume that we only have time-series data of the same scaling, but in real-world data time-series often consists of different scalings, e.g. hourly, daily, or weekly weather forecasts. This project will mainly focus on the development of a clustering algorithm that can handle time series with different scalings. 
 
+## 📌 Methodology Update – 7 April 2025
+
+This project has transitioned from segment-based time series clustering (1 series split into daily windows)
+to clustering **multiple full-length time series** (e.g., one per subject).  
+This aligns with the structure of the potential upcoming real dataset (prod) and the revised thesis scope.
+
+The previous approach is saved as a stable prototype under commit:  
+`feat(prototype): final version of segment-based clustering`
+
+This branch reflects the updated design and will become the new main branch once stabilized.
+
+
 ## Overview
 
 This repository contains code and documentation for my bachelor thesis on clustering time-series data with different scalings. The project focuses on developing clustering algorithms that are robust to the varying temporal resolutions found in real-world data (e.g., hourly, daily, weekly).

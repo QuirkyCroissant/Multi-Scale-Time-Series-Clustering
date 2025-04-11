@@ -1,11 +1,18 @@
 import pandas as pd
-from project_utilities import import_dataframe_from_csv_indexed, deindex_dataframe, compute_and_save_accuracy, export_dataframe_to_csv
+import numpy as np
+from project_utilities import (import_dataframe_from_csv_indexed, 
+                               deindex_dataframe, 
+                               compute_and_save_accuracy, 
+                               export_dataframe_to_csv)
 import config
 import os
+import time
 
-def interpolate_dataset(dataframe: pd.DataFrame, freq='H', method='linear', spline_order=3):
+def interpolate_dataset(dataframe: pd.DataFrame, freq='D', method='linear', spline_order=3):
     '''Applies interpolation(linear/cubic splines) onto the given dataset depending on the parameters'''
-    full_index = pd.date_range(start=dataframe.index.min(), end=dataframe.index.max(), freq=freq)
+    full_index = pd.date_range(start=pd.to_datetime(config.TIME_SERIES_START_DATE), 
+                               periods=config.PERIOD_LENGTH, 
+                               freq=freq)
     df_full = dataframe.reindex(full_index)
     
     if (method == 'krogh' or method == 'piecewise_polynomial' 
@@ -24,34 +31,63 @@ def interpolate_dataset(dataframe: pd.DataFrame, freq='H', method='linear', spli
     df_repaired.fillna(method="ffill", inplace=True)
     df_repaired.fillna(method="bfill", inplace=True)
 
+    if df_repaired.isnull().any().any():
+        raise ValueError(f"Interpolation with method '{method}' resulted in NaNs.")
+    if not np.all(np.isfinite(df_repaired['value'].values)):
+        raise ValueError(f"Interpolation with method '{method}' resulted in non-finite values.")
+
     df_repaired = df_repaired.reset_index().rename(columns={'index': 'time'})
 
     return df_repaired
 
 
-def run_restoration_methods(dataframe: pd.DataFrame):
+def run_restoration_methods(dataframe: pd.DataFrame, series_id=0):
     '''triggers multiple interpolation methods and saves accuracy results'''
-    for m in config.INTERPOLATION_METHODS:
-        print(f"Interpolation with {m}: Started")
+    for method_name in config.INTERPOLATION_METHODS:
+        start = time.time()
+        print(f"Interpolation with {method_name}: Started: Started for Series #{series_id}")
         df = dataframe.copy()
-        repaired_df = interpolate_dataset(df, method=m)
-        compute_and_save_accuracy(repaired_df, m)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.join(script_dir,"..", "data", "restored")
+        # because of numerical instability of polynomial interpolation for methods such as 
+        # "barycentric", "polynomial" and "krogh"
+        try:
+            repaired_df = interpolate_dataset(df, method=method_name)
+        except ValueError as e:
+            print(f"[Warning] Skipping interpolation with {method_name} for Series #{series_id} due to error: {e}")
+            continue
+
+        time_difference = time.time() - start
+        
+        compute_and_save_accuracy(repaired_df, method_name, series_id, time_difference)
+
         export_dataframe_to_csv(repaired_df, 
-                                filename=config.SYN_EXPORT_DATA_NAME + '_' + m, 
-                                output_dir=output_dir)
+                                filename=f"{config.SYN_EXPORT_DATA_NAME}_{series_id}_{method_name}", 
+                                output_dir=os.path.join(config.TO_AGGREGATED_DATA_DIR, method_name))
         
 
         
 
 
-def restore_time_series_data():
+def restore_time_series_data(is_demo_execution):
     '''Imports the corrupt dataset and moves it down the restoration stream. In following 
     functions data gets interpolated, up- and downsampled and than saved in the data 
     directory'''
-    corrupt_data: pd.DataFrame = import_dataframe_from_csv_indexed(config.SYN_EXPORT_DATA_NAME + '_corrupted')
-    
-    run_restoration_methods(corrupt_data)
 
-    print("Completed restoration of time series data")
+    if is_demo_execution:
+        corrupt_origin_dir = config.TO_CORRUPTED_DATA_DIR
+    else:
+        raise NotImplementedError("aggregation pipeline for production mode not implemented yet.")
+
+
+    for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
+
+        print(f"\nRestoring time series #{i}...")
+
+        corrupt_data: pd.DataFrame = import_dataframe_from_csv_indexed(
+            f"{config.SYN_EXPORT_DATA_NAME}_{i}_corrupted",
+            input_dir=corrupt_origin_dir
+            )
+        
+        run_restoration_methods(corrupt_data, series_id=i)
+        print("\n")
+
+    print("Completed restoration of all time series data")

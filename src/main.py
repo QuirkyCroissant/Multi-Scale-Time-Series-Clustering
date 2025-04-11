@@ -1,40 +1,70 @@
 import argparse
-from data_generation import create_time_series, convert_time_series_to_dataframe
+from data_generation import create_multiple_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
 from data_clustering import start_clustering_pipeline
 from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
-                               deindex_dataframe, plot_time_series_comparison )
+                               deindex_dataframe, plot_time_series_comparison, traverse_to_method_dir)
 import config
 
 import numpy as np
 import pandas as pd
-import os
 
 
 def demo_generation_pipeline():
     '''synthetic data generation pipeline'''
-    ts_data = create_time_series(config.TS_META)
-    plot_time_series(config.TIME, ts_data, title=config.SYN_EXPORT_TITLE, 
-                                       xlabel='Time(Days)', ylabel='Value')
+    series_matrix = create_multiple_time_series()
+    for i in range(series_matrix.shape[0]):
+        plot_time_series(
+            y=series_matrix[i], 
+            title=f"{config.SYN_EXPORT_TITLE}_{i}_clean", 
+            xlabel='Days', 
+            ylabel='Value'
+        )
     
-    print("Converting time series to dataframe and exporting to CSV")
+    print("Converting time series to dataframes and exporting to CSV")
 
-    syn_ts_df = convert_time_series_to_dataframe(config.TIME, ts_data)
-    export_dataframe_to_csv(syn_ts_df, config.SYN_EXPORT_DATA_NAME+"_clean")
+    syn_ts_dfs = [
+        convert_time_series_to_dataframe(series_matrix[i]) 
+        for i in range(series_matrix.shape[0])
+    ]
+
+    [
+        export_dataframe_to_csv(syn_ts_dfs[i], 
+                                filename= f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
+                                clean=True, output_dir=config.TO_CLEAN_DATA_DIR) 
+        for i in range(len(syn_ts_dfs)) 
+    ]
 
 def demo_corruption_pipeline():
-    '''corrupted data generation pipeline'''
-    clean_df = import_dataframe_from_csv_indexed(config.SYN_EXPORT_DATA_NAME+"_clean")
-    corr_df = corrupt_time_series_data(clean_df)
-    corr_df = deindex_dataframe(corr_df)
-    export_dataframe_to_csv(corr_df, config.SYN_EXPORT_DATA_NAME+"_corrupted")
+    '''Corrupts each individual clean time series and saves the result.'''
+    for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
+        clean_df = import_dataframe_from_csv_indexed(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean")
 
-def aggregation_pipeline(activate_restoration=False):
+        corr_df = corrupt_time_series_data(clean_df)
+        corr_df = deindex_dataframe(corr_df)
+
+        export_dataframe_to_csv(corr_df, 
+                                filename=f"{config.SYN_EXPORT_DATA_NAME}_{i}", 
+                                corrupted=True, 
+                                output_dir=config.TO_CORRUPTED_DATA_DIR
+                                )
+        
+        plot_time_series(
+            y=corr_df, 
+            title=f"{config.SYN_EXPORT_TITLE}_{i}_corrupted", 
+            xlabel='Days', 
+            ylabel='Value',
+            output_dir=config.TO_CORRUPTED_DATA_PLOTS_DIR
+        )
+
+    print("All time series have been corrupted and exported.")
+
+def aggregation_pipeline(is_demo_execution, activate_restoration=False):
     '''aggregation pipeline'''
     if activate_restoration:
-        restore_time_series_data()
+        restore_time_series_data(is_demo_execution)
     
 
 def clustering_pipeline(comp_dist=False, normalize=False):
@@ -57,6 +87,8 @@ def run_prototype(generate_data,
         it further upstream for clustering.'''
     print("Running Application in Prototype mode:")
 
+    is_demo_execution = True
+
     if generate_data:
         print("Triggering generation of synthetic dataset")
         
@@ -65,63 +97,64 @@ def run_prototype(generate_data,
         print("Triggering corruption of synthetic dataset")
         demo_corruption_pipeline()
     
+    # plots the corrupt to clean time series plots
     if plot:
-        print("Generates comparisson plot of time series data")
+        print("Generating comparison plots for all synthetic time series data")
 
-        clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-        corr_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_corrupted")
+        for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
 
-        clean_df["Time"] = pd.to_datetime(clean_df["Time"])
-        corr_df["time"] = pd.to_datetime(corr_df["time"])
+            clean_df = import_dataframe_from_csv(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean",
+                                                 input_dir=config.TO_CLEAN_DATA_DIR)
+            corr_df = import_dataframe_from_csv(f"{config.SYN_EXPORT_DATA_NAME}_{i}_corrupted",
+                                                input_dir=config.TO_CORRUPTED_DATA_DIR)
 
-        # Create a dictionary with one key-value pair:
-        # The key is a label, and the value is a tuple of the time and value columns.
-        time_series_dict = {
-            "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-            "Corrupted_TS": (corr_df["time"], corr_df["value"])
-            }
+            clean_df["time"] = pd.to_datetime(clean_df["time"])
+            corr_df["time"] = pd.to_datetime(corr_df["time"])
 
-        plot_time_series_comparison(time_series_dict)
-        del time_series_dict
+            # Create a dictionary with one key-value pair:
+            # The key is a label, and the value is a tuple of the time and value columns.
+            time_series_dict = {
+                f"Clean_TS_{i}": (clean_df["time"], clean_df["value"]),
+                f"Corrupted_TS_{i}": (corr_df["time"], corr_df["value"])
+                }
+
+            plot_time_series_comparison(
+                time_series_dict,
+                title=f"{config.SYN_EXPORT_TITLE}_Comparison_{i}",
+                output_dir=config.TO_COMPARISON_PLOTS_DIR
+            )
+            del time_series_dict
     
     print("Triggering Aggregation Pipeline")
-    aggregation_pipeline(restore)
+    aggregation_pipeline(is_demo_execution, restore)
+
+    # plots restored datasets to the original ones, for visual confirmation
+    if plot:
+        for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
+
+            clean_df = import_dataframe_from_csv(f"{config.SYN_EXPORT_DATA_NAME}_{i}_clean")
+
+            for method in config.INTERPOLATION_METHODS:
+                
+                aggregated_df = import_dataframe_from_csv(
+                    filename = f"{config.SYN_EXPORT_DATA_NAME}_{i}_{method}", 
+                    input_dir = traverse_to_method_dir(config.TO_AGGREGATED_DATA_DIR, method))
+                
+                time_series_dict = {
+                    f"Clean_TS{i}": (clean_df["time"], clean_df["value"]),
+                    f"{method}_TS{i}": (aggregated_df["time"], aggregated_df["value"])
+                    }
+
+                plot_time_series_comparison(
+                    time_series_dict, 
+                    title=f"{method}-Interpolation_Comparison_TS{i}",
+                    output_dir=traverse_to_method_dir(config.TO_INTERPOLATION_PLOTS_DIR, method)
+                    )
+                del time_series_dict, aggregated_df
 
     print("Triggering Clustering Pipeline")
     clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
-    
 
-
-    if plot:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        input_dir = os.path.join(script_dir,"..", "data", "restored")
-
-        clean_df = import_dataframe_from_csv(config.SYN_EXPORT_DATA_NAME+"_clean")
-        for method in config.INTERPOLATION_METHODS:
-            
-            aggregated_df = import_dataframe_from_csv(
-                config.SYN_EXPORT_DATA_NAME+"_"+method, 
-                input_dir=input_dir)
-            
-            time_series_dict = {
-                "Clean_TS": (clean_df["Time"], clean_df["Value"]),
-                f"{method}_TS": (aggregated_df["time"], aggregated_df["value"])
-                }
-            
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            output_dir = os.path.join(script_dir, "..", "experiments", "plots", "interpolations")
-
-            plot_time_series_comparison(
-                time_series_dict, 
-                title=f"{method}-Interpolation_Comparison",
-                output_dir=output_dir
-                )
-            del time_series_dict, aggregated_df
-
-
-
-        
-        
     
     
 

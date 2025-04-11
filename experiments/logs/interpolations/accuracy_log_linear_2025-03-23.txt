@@ -1,4 +1,0 @@
-The Mean-Squared-Error(MSE) for using the linear-method is: 
-15.915072678228983
-The Mean-Absolute-Percentage-Error(MAPE) for using the linear-method is: 
-0.2216275435311761

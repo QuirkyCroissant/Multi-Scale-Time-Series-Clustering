@@ -1,30 +1,78 @@
 import numpy as np
+import os
 
-SYNTHETHIC_TIMESERIES_CONFIG: dict = {
-  "period_length": 365,
-  "baseline": 10,
-  "amplitude": 40,
-  "slope": 0.05,
-  "noise_level": 5
+# defines how many time series should be generated for the synthetic data sets
+AMOUNT_OF_INDIVIDUAL_SERIES = 10
+
+# Preset meta configurations for synthetic time series profiles
+SYN_SERIES_PROFILES = {
+    "low_flat": {
+        "baseline": 8,
+        "daily_amp": 0.5,
+        "weekly_amp": 0.0,
+        "holiday_amp": 0.0,
+        "slope": 0.0,
+        "noise_level": 1.0,
+    },
+    "regular": {
+        "baseline": 10,
+        "daily_amp": 1.5,
+        "weekly_amp": 1.0,
+        "holiday_amp": 0.0,
+        "slope": 0.0,
+        "noise_level": 1.5,
+    },
+    "vacation_heavy": {
+        "baseline": 10,
+        "daily_amp": 1.2,
+        "weekly_amp": 0.5,
+        "holiday_amp": 2.0,
+        "slope": 0.0,
+        "noise_level": 1.2,
+    },
+    "growth": {
+        "baseline": 10,
+        "daily_amp": 1.0,
+        "weekly_amp": 0.5,
+        "holiday_amp": 0.0,
+        "slope": 0.05,
+        "noise_level": 1.0,
+    }
 }
 
-# Constants that are controlling the time series data generation for the prototype
+PERIOD_LENGTH = 365
+TIME_SERIES_START_DATE = "2023-01-01"
+
+
+
+# (POTENTIALLY OBSOLETE) Constants that are controlling the time series data generation for the prototype
 SAMPLES_PER_DAY = 24
-# 2 years of 24 hours on 365 days timesteps from 0 to 731
-TIME = np.arange(2 * 
-                 SAMPLES_PER_DAY * 
-                 SYNTHETHIC_TIMESERIES_CONFIG['period_length'] + 1,
-                  dtype=np.float32) / SAMPLES_PER_DAY
-TS_META = (TIME,
-           SYNTHETHIC_TIMESERIES_CONFIG['baseline'], 
-           SYNTHETHIC_TIMESERIES_CONFIG["amplitude"],
-           SYNTHETHIC_TIMESERIES_CONFIG["slope"],
-           SYNTHETHIC_TIMESERIES_CONFIG["noise_level"]
-           )
+
 
 SYN_EXPORT_TITLE = "Synthetic_Time_Series"
 SYN_EXPORT_DATA_NAME = "ts_demo_data"
 RANDOM_SEED = 69
+
+
+#### Traversal Paths for I/O operations
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+TO_CLEAN_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "generated")
+TO_CORRUPTED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "corrupted")
+TO_AGGREGATED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "restored")
+
+TO_DISTANCES_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "distance_matrices")
+TO_INTERPOLATION_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "interpolations")
+
+
+TO_CLEAN_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "generated_data")
+TO_CORRUPTED_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "corrupted_data")
+TO_COMPARISON_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "comparisons")
+
+TO_INTERPOLATION_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "interpolations")
+TO_CLUSTERING_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "clustering")
+
 
 
 #### corruption parameters
@@ -34,6 +82,8 @@ CORRUPTION_PROBS = {
     "partial": 0.30,      # chance to randomly delete some hours
     "reduce": 0.30        # chance to fully reduce to a single measurement
 }
+
+DAILY_CORRUPTION_RATE = 0.15
 
 
 #### restoration parameters
