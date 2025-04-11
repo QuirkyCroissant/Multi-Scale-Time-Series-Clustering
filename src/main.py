@@ -155,10 +155,6 @@ def run_prototype(generate_data,
     print("Triggering Clustering Pipeline")
     clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
 
-
-
-        
-        
     
     
 
