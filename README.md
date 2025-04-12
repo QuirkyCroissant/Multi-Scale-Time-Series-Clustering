@@ -46,8 +46,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
 - **Develop clustering algorithms:** Create/apply methods that effectively cluster time-series data with different scalings.
 - **Evaluate performance:** Test and validate the algorithms on various datasets.
-- **(Optional Extension):** Generate graphs from time-series data, apply clustering algorithms to the graphs, and compare the results with the time series clustering using similarity measures.
-
+- **Extension (Work-in-Progress):** Represent time series as nodes in a graph with Pearson-based dissimilarities as edge weights, apply graph-based clustering, and compare results with time-series-based clustering.
 
 ## Project Structure
 

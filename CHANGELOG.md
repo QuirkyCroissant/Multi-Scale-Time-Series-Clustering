@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## prototype-v3 - Upcoming
+
+### Added
+- Graph transformation: time series to node mapping using Pearson correlation dissimilarity
+- Visualization module for graph structures with threshold-based edge sparsification
+- Export of graph-based dissimilarity matrix
+
+### Planned
+- Graph clustering module (e.g., community detection)
+- Comparison of graph-based clusters with DTW/FastDTW-based results
+
+---
+
 ## [prototype-v2](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v2) - 2025-04-10
 
 ### Added

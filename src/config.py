@@ -72,6 +72,9 @@ TO_COMPARISON_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots",
 
 TO_INTERPOLATION_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "interpolations")
 TO_CLUSTERING_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "clustering")
+TO_GRAPH_ANALYSIS_PLOT_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "graph_analysis")
+
+
 
 
 
@@ -106,7 +109,7 @@ INTERPOLATION_METHODS = [
 SEGMENTATION_WINDOW = 24
 SYN_EXPORT_DIST_MATRIX_NAME = "distance_matrix"
 DEFAULT_DISSIMILARITY = "dtw"
-DISSIMILARITY_MEASURES = ["fastDTW", "dtw"]
+DISSIMILARITY_MEASURES = ["fastDTW", "dtw", 'pearson']
 
 ### clustering parameters
 DEFAULT_CLUSTERING_METHOD = "kmedoids"
@@ -117,4 +120,13 @@ K_MEDOIDS_DEFAULT_MAX_CLUSTERING_AMOUNT = 10
 # if we want to compare it to kmedoids cluster evaluation and make the clustering 
 # semi-unsupervised
 DEFAULT_AMOUNT_OF_CLUSTERS = 4
+
+### Graph parameters
+
+# lets keep only edges which have a correlation of at least 40%
+GRAPH_THRESHOLD = 0.7
+DEFAULT_GRAPH_DISSIMILARITY = DISSIMILARITY_MEASURES[2]
+
+
+
 

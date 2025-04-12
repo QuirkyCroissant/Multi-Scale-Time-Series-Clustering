@@ -3,6 +3,7 @@ from data_generation import create_multiple_time_series, convert_time_series_to_
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
 from data_clustering import start_clustering_pipeline
+from graph_analysis import initiate_graph_analysis
 from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
                                deindex_dataframe, plot_time_series_comparison, traverse_to_method_dir)
@@ -67,12 +68,16 @@ def aggregation_pipeline(is_demo_execution, activate_restoration=False):
         restore_time_series_data(is_demo_execution)
     
 
-def clustering_pipeline(comp_dist=False, normalize=False):
+def clustering_pipeline(comp_dist=False, normalize=False) -> str:
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
-    matrix is used for the subsequent clustering.'''
-    start_clustering_pipeline(comp_dist, normalize)
+    matrix is used for the subsequent clustering. Returns which aggregation method was used,
+    on which clustering was used.'''
+    return start_clustering_pipeline(comp_dist, normalize)
     
+def graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
+                              comp_dist=False):
+    initiate_graph_analysis(aggregation_method, comp_dist)
     
 
 def run_prototype(generate_data, 
@@ -153,7 +158,10 @@ def run_prototype(generate_data,
                 del time_series_dict, aggregated_df
 
     print("Triggering Clustering Pipeline")
-    clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
+    aggregation_method = clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
+
+    print("Triggering Graph Analysis Pipeline")
+    graph_clustering_pipeline(aggregation_method=aggregation_method ,comp_dist=compute_dist)
 
     
     

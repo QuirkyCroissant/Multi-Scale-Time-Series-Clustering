@@ -10,7 +10,7 @@ from project_utilities import (import_dataframe_from_csv_indexed,
 from sklearn.cluster import AgglomerativeClustering
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
-from scipy.stats import zscore
+from scipy.stats import zscore, pearsonr
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
@@ -36,10 +36,11 @@ def compute_distance_matrix(sequences: np.ndarray,
                             method=config.DEFAULT_DISSIMILARITY,
                             normalize=False):
     '''
-    Computes the pair-wise distance of the passed segmented sequence by using Fast-Dynamic Time
-    Warping(DTW or fastDTW) dissimilarity measure. It utilizises numerous performant methodologies to realise it, 
-    like only computing the upper triangular matrix(pairs variable) of the symmetric distance matrix and
-    it leverages multithreading functionality provided by the joblib library.
+    Computes the pair-wise dissimilarity matrix for a set of time series. Supports Fast-Dynamic Time
+    Warping(DTW or fastDTW) and Pearson Correlation as dissimilarity measures. 
+    It utilizises numerous performant methodologies to realise it, like only computing the upper 
+    triangular matrix(pairs variable) of the symmetric distance matrix and it leverages multithreading 
+    functionality provided by the joblib library.
     '''
 
     N = len(sequences)
@@ -54,6 +55,8 @@ def compute_distance_matrix(sequences: np.ndarray,
         distance_func = lambda x, y: fastdtw(x, y)[0]
     elif method == "dtw":
         distance_func = lambda x, y: dtw(x, y).distance
+    elif method == "pearson":
+        distance_func = lambda x, y: 1 - pearsonr(x, y)[0]
     else:
         raise ValueError(f"Unsupported dissimilarity measure. {method}")
         
@@ -137,7 +140,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
 
 def start_clustering_pipeline(compute_dist=False, 
                               normalize=False,
-                              aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
+                              aggregation_method=config.DEFAULT_INTERPOLATION_METHOD) -> str:
     '''Starts the whole clustering process, passing aggregated data through a segmentation preprocessing
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
     the given distance matrix, also able to differenciate between data normalization or not.'''
@@ -219,4 +222,5 @@ def start_clustering_pipeline(compute_dist=False,
     else:
         raise ValueError(f"Unsupported clustering method. Supported methods are: {config.CLUSTERING_METHODS}")
     
+    return aggregation_method
     
