@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 from scipy.stats import zscore
+from scipy.cluster.hierarchy import dendrogram, linkage, cophenet
+from scipy.spatial.distance import squareform
 import pandas as pd
 import numpy as np
 import config
@@ -318,7 +320,7 @@ def plot_kmedoid_results(series_matrix,
     for idx, (series, label) in enumerate(zip(series_matrix,labels)):
         axs[0].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
 
-    axs[0].set_title("Full Time Series Colored by Cluster(n = {n_series})" + ("- Normalized" if is_normalized else ""))
+    axs[0].set_title(f"Full Time Series Colored by Cluster(n = {n_series})" + ("- Normalized" if is_normalized else ""))
     axs[0].set_xlabel("Time (Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
@@ -340,6 +342,89 @@ def plot_kmedoid_results(series_matrix,
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     filename = f"kmedoid_multiseries_{config.DEFAULT_DISSIMILARITY}_{'normalized' if is_normalized else 'raw'}_{date}.png"
         
+
+    plot_path = os.path.join(
+        config.TO_CLUSTERING_PLOTS_DIR,
+        filename
+    )
+
+    plt.tight_layout()
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"Multi-series clustering plot saved to: {plot_path}")
+
+def plot_hierachical_results(series_matrix, 
+                             labels, 
+                             is_normalized=False, 
+                             method="average", 
+                             k = None, 
+                             dissimilarity_matrix=None):
+    '''Plots the results of hierarchical clustering. On the left is the dendrogram,
+    and on the right is the colored time series by cluster.'''
+
+    if dissimilarity_matrix is None:
+        raise ValueError("To plot a dendrogram, you must provide a dissimilarity matrix.")
+    
+    n_clusters = len(np.unique(labels))
+    colors = plt.cm.get_cmap("tab10", n_clusters)
+    series_length = series_matrix.shape[1]
+    time_axis = np.arange(series_length)
+    n_series = series_matrix.shape[0]
+
+    fig, axs = plt.subplots(1,2, figsize=(16, 8), gridspec_kw={'width_ratios': [2, 3]})
+
+    ### Dendogram ###
+    condensed = squareform(dissimilarity_matrix)
+    linkage_matrix = linkage(condensed, method=method)
+
+    # Used to cut the dendrogram if a k is defined 
+    # grabs the height (distance) of the last merge before you reach k clusters
+    if k:
+        threshold = linkage_matrix[-(k - 1), 2]
+
+    dendrogram(linkage_matrix, 
+               labels=[f"TS_{i}" for i in range(n_series)], 
+               ax=axs[0], 
+               color_threshold=0)
+    
+    if k:
+        axs[0].set_ylim(0, threshold + (0.1 * threshold))
+        #axs[0].axhline(y=threshold, color='r', linestyle='--')
+
+        
+    coph_corr, _ = cophenet(linkage_matrix, condensed)
+    
+    fig.suptitle(f"Hierarchical Clustering Results (Cophenetic Corr: {coph_corr:.3f})", fontsize=14)
+    
+    dendro_title = "Dendrogram of Hierachical Clustering"
+    if k:
+        dendro_title += f" (k={k})"
+    axs[0].set_title(dendro_title)
+    axs[0].set_xlabel("Time Series")
+    axs[0].set_ylabel("Distance")
+
+    ### Full Time Series coloured by cluster ###
+    for idx, (series, label) in enumerate(zip(series_matrix,labels)):
+        axs[1].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
+
+    axs[1].set_title(f"Time Series by Cluster (n = {n_series})" + (" - Normalized" if is_normalized else ""))
+    axs[1].set_xlabel("Time (Days)")
+    axs[1].set_ylabel("Value")
+    axs[1].grid(True)
+
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"hierarchical_multiseries_{config.DEFAULT_DISSIMILARITY}_"
+    
+    if k:
+        filename += f"capped_to_{k}_"
+    else:
+        filename += "unsupervised_"
+    
+    if is_normalized:
+        filename += f"normalized_{date}.png"
+    else:
+        filename += f"raw_{date}.png"
+
 
     plot_path = os.path.join(
         config.TO_CLUSTERING_PLOTS_DIR,

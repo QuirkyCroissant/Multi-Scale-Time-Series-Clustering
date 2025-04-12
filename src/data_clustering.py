@@ -4,8 +4,10 @@ from project_utilities import (import_dataframe_from_csv_indexed,
                                import_distance_matrix,
                                plot_silhouette_score,
                                plot_kmedoid_results,
+                               plot_hierachical_results,
                                import_restored_data_as_numpy,
                                traverse_to_method_dir)
+from sklearn.cluster import AgglomerativeClustering
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
 from scipy.stats import zscore
@@ -106,8 +108,28 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
         return cluster_labels, model
     
     elif cluster_method == "hierarchical":
-        # TODO: implement hierarchical clustering
-        pass
+        
+        print("Running Agglomerative Hierarchical Clustering with average linkage")
+
+        if k is not None:
+            print(f"Clustering using fixed number of clusters (k={k})")
+            model = AgglomerativeClustering(
+                metric='precomputed',
+                linkage='average',
+                n_clusters=k
+            )
+            cluster_labels = model.fit_predict(distance_matrix)
+        else:
+            print(f"No k provided: running fully unsupervisied clustering (distance threshold = 0)")
+            model = AgglomerativeClustering(
+                metric='precomputed',
+                linkage='average',
+                distance_threshold=0,
+                n_clusters=None
+            )
+            cluster_labels = model.fit_predict(distance_matrix)
+        return cluster_labels, model
+        
     else:
         raise ValueError(f"Unsupported clustering method. {cluster_method}")
            
@@ -151,8 +173,6 @@ def start_clustering_pipeline(compute_dist=False,
 
 
         print("Completed Dissimilarity Matrix Computation.")
-
-    # TODO: Passing computed matrix into clustering logic
     
     
     labels, model = initiate_clustering_computation(
@@ -162,13 +182,12 @@ def start_clustering_pipeline(compute_dist=False,
             date=None,
             is_normalize=normalize),
             cluster_method=config.DEFAULT_CLUSTERING_METHOD,
-            k=None,
+            k=config.DEFAULT_AMOUNT_OF_CLUSTERS,
             is_normalized=normalize
     )
 
     print("Cluster assignments:", labels)
 
-    #TODO visualise the labeled sequences from kmedoid
     
     series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
             config.TO_AGGREGATED_DATA_DIR, 
@@ -179,8 +198,25 @@ def start_clustering_pipeline(compute_dist=False,
             normalized_series_matrix = np.apply_along_axis(zscore, 1, series_matrix)
             series_matrix = normalized_series_matrix
 
-    plot_kmedoid_results(series_matrix,
-                         labels, 
-                         model,
-                         normalize)
+    if config.DEFAULT_CLUSTERING_METHOD == "kmedoids":
+        plot_kmedoid_results(series_matrix,
+                            labels, 
+                            model,
+                            normalize)
+    elif config.DEFAULT_CLUSTERING_METHOD == "hierarchical":
+        plot_hierachical_results(series_matrix,
+                            labels,
+                            normalize,
+                            method="average",
+                            k=config.DEFAULT_AMOUNT_OF_CLUSTERS,
+                            dissimilarity_matrix=import_distance_matrix(
+                                                    filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
+                                                    method=config.DEFAULT_DISSIMILARITY,
+                                                    date=None,
+                                                    is_normalize=normalize
+                                                    )
+        )
+    else:
+        raise ValueError(f"Unsupported clustering method. Supported methods are: {config.CLUSTERING_METHODS}")
+    
     

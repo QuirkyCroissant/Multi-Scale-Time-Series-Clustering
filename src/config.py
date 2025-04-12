@@ -110,6 +110,11 @@ DISSIMILARITY_MEASURES = ["fastDTW", "dtw"]
 
 ### clustering parameters
 DEFAULT_CLUSTERING_METHOD = "kmedoids"
+CLUSTERING_METHODS = ["kmedoids", "hierarchical"]
 K_MEDOIDS_DEFAULT_CLUSTER_AMOUNT = 3
 K_MEDOIDS_DEFAULT_MAX_CLUSTERING_AMOUNT = 10
+
+# if we want to compare it to kmedoids cluster evaluation and make the clustering 
+# semi-unsupervised
+DEFAULT_AMOUNT_OF_CLUSTERS = 4
 
