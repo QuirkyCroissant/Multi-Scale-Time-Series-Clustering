@@ -285,9 +285,9 @@ def plot_silhouette_score(k_values, silhoutte_scores, is_normalized=False):
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     if is_normalized:
-        filename = f"silhouette_score_plot_normalized_{date}.png"
+        filename = f"silhouette_score_{config.DEFAULT_DISSIMILARITY}_normalized_{date}.png"
     else:
-        filename = f"silhouette_score_plot_raw_{date}.png"
+        filename = f"silhouette_score_{config.DEFAULT_DISSIMILARITY}_raw_{date}.png"
         
     plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "..",
@@ -309,6 +309,7 @@ def plot_kmedoid_results(series_matrix,
     colors = plt.cm.get_cmap("tab10", n_clusters)
     series_length = series_matrix.shape[1]
     time_axis = np.arange(series_length)
+    n_series = series_matrix.shape[0]
     
 
     _, axs = plt.subplots(2, 1, figsize=(14, 8), gridspec_kw={'height_ratios': [3, 1]})
@@ -317,7 +318,7 @@ def plot_kmedoid_results(series_matrix,
     for idx, (series, label) in enumerate(zip(series_matrix,labels)):
         axs[0].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
 
-    axs[0].set_title("Full Time Series Colored by Cluster" + (" (Normalized)" if is_normalized else ""))
+    axs[0].set_title("Full Time Series Colored by Cluster(n = {n_series})" + ("- Normalized" if is_normalized else ""))
     axs[0].set_xlabel("Time (Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
@@ -337,7 +338,7 @@ def plot_kmedoid_results(series_matrix,
 
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    filename = f"kmedoid_multiseries_plot_{'normalized' if is_normalized else 'raw'}_{date}.png"
+    filename = f"kmedoid_multiseries_{config.DEFAULT_DISSIMILARITY}_{'normalized' if is_normalized else 'raw'}_{date}.png"
         
 
     plot_path = os.path.join(

@@ -17,7 +17,7 @@ def weekly_pattern(time, amplitude=1.0):
     weekend_boosted = (days >= 5).astype(float)
     return amplitude * weekend_boosted
     
-def holiday_boost(time, amplitude=1.0, start_day=224, duration=62):
+def holiday_boost(time, amplitude=1.0, start_day=200, duration=90):
     '''All days in the series which are bigger than the start_day and 
     in the specified duration get boosted'''
     return amplitude * ((time >= start_day) & (time < start_day + duration)).astype(float)
