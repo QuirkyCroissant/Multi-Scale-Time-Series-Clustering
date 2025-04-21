@@ -22,7 +22,8 @@
         3,
         2
     ],
-    "silhouetteScore": 0,
+    "silhouetteScore": 0.8188158546567952,
+    "copheneticCorrelation": null,
     "radius": 3,
     "medoidIndices": [
         2,
@@ -30,7 +31,7 @@
         9,
         7
     ],
-    "timeStamp": "2025-04-21_16-23-16",
-    "computationalTime": 0.003719806671142578,
+    "timeStamp": "2025-04-21_19-16-43",
+    "computationalTime": 0.26100611686706543,
     "randomSeed": 69
 }

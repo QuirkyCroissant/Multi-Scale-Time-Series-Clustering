@@ -8,7 +8,8 @@ from project_utilities import (import_dataframe_from_csv_indexed,
                                import_restored_data_as_numpy,
                                traverse_to_method_dir,
                                prepare_default_clustering_log, 
-                               export_clustering_log)
+                               export_clustering_log,
+                               get_cophenetic_corr)
 from sklearn.cluster import AgglomerativeClustering
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
@@ -123,7 +124,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                              n_clusters=k,
                                              labels=cluster_labels,
                                              cluster_sizes=[list(cluster_labels).count(i) for i in range(k)],
-                                             silhouette_score=best_silhoutte_score,
+                                             silhouette_score=best_silhoutte_score if best_silhoutte_score > 0 else None,
                                              radius=config.FASTDTW_RADIUS,
                                              medoid_indices=model.medoid_indices_.tolist(),
                                              computational_time=time_diff,
@@ -162,10 +163,10 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                             normalized=is_normalized,
                                             n_clusters=k,
                                             labels=cluster_labels,
-                                            cluster_sizes=[list(cluster_labels).count(i) for i in range(k)],
+                                            cluster_sizes=[list(cluster_labels).count(i) for i in range(k)] if k is not None else None,
                                             silhouette_score=best_silhoutte_score,
+                                            cophenetic_corr=get_cophenetic_corr(distance_matrix, "average"),
                                             radius=config.FASTDTW_RADIUS,
-                                            medoid_indices=model.medoid_indices_.tolist(),
                                             computational_time=time_diff,
                                             random_seed=config.RANDOM_SEED)
         

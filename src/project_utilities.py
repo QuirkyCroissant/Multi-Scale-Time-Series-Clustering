@@ -146,6 +146,7 @@ def prepare_default_clustering_log(clustering_method: str,
                                    labels: List[int],
                                    cluster_sizes: List[int],
                                    silhouette_score: Optional[float] = None,
+                                   cophenetic_corr: Optional[float] = None,
                                    radius: Optional[int] = None ,
                                    medoid_indices: Optional[List[int]] = None,
                                    computational_time: Optional[float] = None,
@@ -163,6 +164,7 @@ def prepare_default_clustering_log(clustering_method: str,
         "labels": labels.tolist() if isinstance(labels, np.ndarray) else labels,
         "clusterSizes": cluster_sizes.tolist() if isinstance(cluster_sizes, np.ndarray) else cluster_sizes,
         "silhouetteScore": silhouette_score,
+        "copheneticCorrelation": cophenetic_corr,
         "radius": radius,
         "medoidIndices": medoid_indices.tolist() if isinstance(medoid_indices, np.ndarray) else medoid_indices,
         "timeStamp": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
@@ -215,18 +217,21 @@ def export_clustering_log(log_data: dict):
     timestamp = log_data['timeStamp']
 
     clustering_method = log_data['clusteringMethod']
-    if clustering_method == "hierachical" and log_data['nClusters'] is not None:
+    if clustering_method == "hierarchical" and log_data['nClusters'] is not None:
         filename = f"log_{clustering_method}_capped{log_data['nClusters']}"
     else:
         filename = f"log_{clustering_method}"
 
 
     distance_measure = log_data['distanceMeasure']
+    is_normalized = "n_" if log_data['normalized'] else ""
+    print(log_data['nClusters'])
+    is_unsupervised = "u_" if log_data['nClusters'] is None else ""
     if distance_measure == "fastDTW":
         radius = log_data['radius']
-        filename += f"_{distance_measure}_r{radius}_{timestamp}.json"
+        filename += f"_{distance_measure}_r{radius}_{is_normalized}{is_unsupervised}{timestamp}.json"
     else:
-        filename += f"_{distance_measure}_{timestamp}.json"
+        filename += f"_{distance_measure}_{is_normalized}{is_unsupervised}{timestamp}.json"
 
     if clustering_method in config.CLUSTERING_METHODS:
         full_path = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, filename)
@@ -452,6 +457,10 @@ def plot_kmedoid_results(series_matrix,
     plt.savefig(plot_path)
     plt.close()
     print(f"Multi-series clustering plot saved to: {plot_path}")
+
+def get_cophenetic_corr(dist_matrix, linkage_method):
+    condensed = squareform(dist_matrix)
+    return cophenet(linkage(condensed, method=linkage_method), condensed)[0]
 
 def plot_hierachical_results(series_matrix, 
                              labels, 

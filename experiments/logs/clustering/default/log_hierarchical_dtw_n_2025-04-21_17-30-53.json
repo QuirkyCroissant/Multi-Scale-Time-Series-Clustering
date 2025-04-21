@@ -1,0 +1,32 @@
+{
+    "clusteringMethod": "hierarchical",
+    "distanceMeasure": "dtw",
+    "normalized": true,
+    "nClusters": 4,
+    "dataQuantity": 10,
+    "labels": [
+        3,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        1,
+        0
+    ],
+    "clusterSizes": [
+        7,
+        1,
+        1,
+        1
+    ],
+    "silhouetteScore": 0,
+    "copheneticCorrelation": 0.9787632037179606,
+    "radius": 3,
+    "medoidIndices": null,
+    "timeStamp": "2025-04-21_17-30-53",
+    "computationalTime": 0.004602909088134766,
+    "randomSeed": 69
+}

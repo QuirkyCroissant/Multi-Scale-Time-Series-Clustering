@@ -1,0 +1,35 @@
+{
+    "clusteringMethod": "kmedoids",
+    "distanceMeasure": "dtw",
+    "normalized": true,
+    "nClusters": 3,
+    "dataQuantity": 10,
+    "labels": [
+        0,
+        0,
+        2,
+        2,
+        0,
+        1,
+        2,
+        2,
+        0,
+        1
+    ],
+    "clusterSizes": [
+        4,
+        2,
+        4
+    ],
+    "silhouetteScore": 0.20437353126922786,
+    "copheneticCorrelation": null,
+    "radius": 3,
+    "medoidIndices": [
+        1,
+        5,
+        7
+    ],
+    "timeStamp": "2025-04-21_19-19-59",
+    "computationalTime": 0.24206304550170898,
+    "randomSeed": 69
+}
