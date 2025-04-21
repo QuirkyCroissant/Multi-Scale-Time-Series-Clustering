@@ -64,7 +64,10 @@ TO_AGGREGATED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "restored")
 
 TO_DISTANCES_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "distance_matrices")
 TO_INTERPOLATION_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "interpolations")
+TO_CLUSTERING_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "clustering")
 
+TO_DEFAULT_CLUSTERING_LOGS_DIR = os.path.join(TO_CLUSTERING_LOGS_DIR, "default")
+TO_GRAPH_CLUSTERING_LOGS_DIR = os.path.join(TO_CLUSTERING_LOGS_DIR, "graph")
 
 TO_CLEAN_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "generated_data")
 TO_CORRUPTED_DATA_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "corrupted_data")

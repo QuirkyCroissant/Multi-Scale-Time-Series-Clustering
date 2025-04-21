@@ -6,7 +6,9 @@ from project_utilities import (import_dataframe_from_csv_indexed,
                                plot_kmedoid_results,
                                plot_hierachical_results,
                                import_restored_data_as_numpy,
-                               traverse_to_method_dir)
+                               traverse_to_method_dir,
+                               prepare_default_clustering_log, 
+                               export_clustering_log)
 from sklearn.cluster import AgglomerativeClustering
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
@@ -17,6 +19,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 from fastdtw import fastdtw
 from dtw import dtw
+import time
 
 
 def convert_to_segmented_series(data, window_length=config.SEGMENTATION_WINDOW):
@@ -84,6 +87,9 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                     save_plots=True,
                                     is_normalized=False):
     '''Starts clustering procedure on a retrieved distance matrix applying either `kmedoid` or `hierarchical`'''
+    start = time.time()
+    best_silhoutte_score = 0
+    
     if cluster_method == "kmedoids":
         if k is None:
             print("No k provided. Optimizing k using silhoutte score...")
@@ -98,6 +104,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                 print(f"k={curr_k}: Silhoutte Score: {silhoutte_scores[-1]:.3f}")
                 
             best_k = k_values[silhoutte_scores.index(max(silhoutte_scores))]
+            best_silhoutte_score = max(silhoutte_scores)
             print(f"\nOptimal k found: {best_k}")
             k = best_k
 
@@ -108,6 +115,22 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                          metric='precomputed', 
                          random_state=config.RANDOM_SEED)
         cluster_labels = model.fit_predict(distance_matrix)
+
+        time_diff = time.time() - start
+        log = prepare_default_clustering_log(clustering_method=cluster_method,
+                                             distance_measure=config.DEFAULT_DISSIMILARITY,
+                                             normalized=is_normalized,
+                                             n_clusters=k,
+                                             labels=cluster_labels,
+                                             cluster_sizes=[list(cluster_labels).count(i) for i in range(k)],
+                                             silhouette_score=best_silhoutte_score,
+                                             radius=config.FASTDTW_RADIUS,
+                                             medoid_indices=model.medoid_indices_.tolist(),
+                                             computational_time=time_diff,
+                                             random_seed=config.RANDOM_SEED)
+        
+        export_clustering_log(log)
+
         return cluster_labels, model
     
     elif cluster_method == "hierarchical":
@@ -131,6 +154,23 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                 n_clusters=None
             )
             cluster_labels = model.fit_predict(distance_matrix)
+
+
+        time_diff = time.time() - start
+        log = prepare_default_clustering_log(clustering_method=cluster_method,
+                                            distance_measure=config.DEFAULT_DISSIMILARITY,
+                                            normalized=is_normalized,
+                                            n_clusters=k,
+                                            labels=cluster_labels,
+                                            cluster_sizes=[list(cluster_labels).count(i) for i in range(k)],
+                                            silhouette_score=best_silhoutte_score,
+                                            radius=config.FASTDTW_RADIUS,
+                                            medoid_indices=model.medoid_indices_.tolist(),
+                                            computational_time=time_diff,
+                                            random_seed=config.RANDOM_SEED)
+        
+        export_clustering_log(log)
+
         return cluster_labels, model
         
     else:

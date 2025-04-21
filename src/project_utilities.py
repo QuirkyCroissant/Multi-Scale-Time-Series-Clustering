@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from typing import List, Optional, Dict, Union
 from scipy.stats import zscore
 from scipy.cluster.hierarchy import dendrogram, linkage, cophenet
 from scipy.spatial.distance import squareform
@@ -10,6 +11,7 @@ import datetime
 import os
 import re
 import json
+
 
 def import_restored_data_as_numpy(input_dir):
     '''Imports the aggregated data from a given interpolated 
@@ -43,7 +45,6 @@ def export_distance_matrix(np_matrix,
     print(f"Distance matrix saved to: {filepath}")
         
         
-# TODO: import_distance_matrix function
 def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                            is_normalize=False,
                            method=config.DEFAULT_DISSIMILARITY,
@@ -114,10 +115,10 @@ def compute_and_save_accuracy(df, method_name,
     print(f"The Mean-Absolute-Percentage-Error(MAPE) for using the {method_name}-method is: \n{mape_value}")
     values.append(mape_value)
 
-    export_logfile(values, method_name, series_id, time_difference)
+    export_accuracy_log(values, method_name, series_id, time_difference)
 
     
-def export_logfile(values, method_name, series_id, time_difference):
+def export_accuracy_log(values, method_name, series_id, time_difference):
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     output_dir = config.TO_INTERPOLATION_LOGS_DIR
@@ -138,6 +139,105 @@ def export_logfile(values, method_name, series_id, time_difference):
     print(f"Log file saved to: {filename}")
     
     
+def prepare_default_clustering_log(clustering_method: str,
+                                   distance_measure: str,
+                                   normalized: bool,
+                                   n_clusters: int,
+                                   labels: List[int],
+                                   cluster_sizes: List[int],
+                                   silhouette_score: Optional[float] = None,
+                                   radius: Optional[int] = None ,
+                                   medoid_indices: Optional[List[int]] = None,
+                                   computational_time: Optional[float] = None,
+                                   random_seed: int = config.RANDOM_SEED,
+                                   extra: Optional[Dict] = None) -> Dict:
+    '''Helper function which builds a log file for the results that are being produced 
+    after the clustering process with time series data.'''
+
+    log = {
+        "clusteringMethod": clustering_method,
+        "distanceMeasure": distance_measure,
+        "normalized": normalized,
+        "nClusters": n_clusters,
+        "dataQuantity": len(labels),
+        "labels": labels.tolist() if isinstance(labels, np.ndarray) else labels,
+        "clusterSizes": cluster_sizes.tolist() if isinstance(cluster_sizes, np.ndarray) else cluster_sizes,
+        "silhouetteScore": silhouette_score,
+        "radius": radius,
+        "medoidIndices": medoid_indices.tolist() if isinstance(medoid_indices, np.ndarray) else medoid_indices,
+        "timeStamp": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+        "computationalTime": computational_time,
+        "randomSeed": random_seed
+    }
+
+    if extra:
+        log.update(extra)
+    return log
+
+def prepare_graph_clustering_log(clustering_method: str,
+                                 edge_weight_metric: str,
+                                 threshold: float,
+                                 normalized: bool,
+                                 n_clusters: int,
+                                 labels: List[int],
+                                 cluster_sizes: List[int],
+                                 radius: Optional[int] = None,
+                                 computational_time: Optional[float] = None,
+                                 random_seed: int = config.RANDOM_SEED,
+                                 extra: Optional[Dict] = None) -> Dict:
+    '''Helper function which builds a log file for the results that are being produced 
+    after the clustering process with the graph data.'''
+
+    log = {
+        "clusteringMethod": clustering_method,
+        "distanceMeasure": edge_weight_metric,
+        "threshold": threshold,
+        "normalized": normalized,
+        "nClusters": n_clusters,
+        "dataQuantity": len(labels),
+        "labels": labels.tolist() if isinstance(labels, np.ndarray) else labels,
+        "clusterSizes": cluster_sizes.tolist() if isinstance(cluster_sizes, np.ndarray) else cluster_sizes,
+        "radius": radius,
+        "timeStamp": datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+        "computationalTime": computational_time,
+        "randomSeed": random_seed
+    }
+
+    if extra:
+        log.update(extra)
+    return log
+
+
+def export_clustering_log(log_data: dict):
+    '''Function takes in a dictionary of resulting clustering pipeline from either the default
+    or the graph clustering process and saves it as a json file in the corresponding directory'''
+    
+    timestamp = log_data['timeStamp']
+
+    clustering_method = log_data['clusteringMethod']
+    if clustering_method == "hierachical" and log_data['nClusters'] is not None:
+        filename = f"log_{clustering_method}_capped{log_data['nClusters']}"
+    else:
+        filename = f"log_{clustering_method}"
+
+
+    distance_measure = log_data['distanceMeasure']
+    if distance_measure == "fastDTW":
+        radius = log_data['radius']
+        filename += f"_{distance_measure}_r{radius}_{timestamp}.json"
+    else:
+        filename += f"_{distance_measure}_{timestamp}.json"
+
+    if clustering_method in config.CLUSTERING_METHODS:
+        full_path = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, filename)
+    else:
+        full_path = os.path.join(config.TO_GRAPH_CLUSTERING_LOGS_DIR, filename)
+
+    with open(full_path, "w", encoding='utf-8') as f: 
+        json.dump(log_data, f, ensure_ascii=False, indent=4)
+    
+    print(f"Clustering Log file saved to: {full_path}")
+
 
 def export_dataframe_to_csv(df, 
                             filename=config.SYN_EXPORT_DATA_NAME, 
