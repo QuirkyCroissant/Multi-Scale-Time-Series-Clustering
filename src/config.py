@@ -108,8 +108,9 @@ INTERPOLATION_METHODS = [
 # we want to group the hourly data into chunks of days, therefore 24
 SEGMENTATION_WINDOW = 24
 SYN_EXPORT_DIST_MATRIX_NAME = "distance_matrix"
-DEFAULT_DISSIMILARITY = "dtw"
+DEFAULT_DISSIMILARITY = "fastDTW"
 DISSIMILARITY_MEASURES = ["fastDTW", "dtw", 'pearson']
+FASTDTW_RADIUS = 3
 
 ### clustering parameters
 DEFAULT_CLUSTERING_METHOD = "kmedoids"

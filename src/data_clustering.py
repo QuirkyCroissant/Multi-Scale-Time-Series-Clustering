@@ -52,7 +52,7 @@ def compute_distance_matrix(sequences: np.ndarray,
         tqdm_desc = f"Computing {method} distances without normalization"
     
     if method == "fastDTW":
-        distance_func = lambda x, y: fastdtw(x, y)[0]
+        distance_func = lambda x, y: fastdtw(x, y, radius=config.FASTDTW_RADIUS)[0]
     elif method == "dtw":
         distance_func = lambda x, y: dtw(x, y).distance
     elif method == "pearson":
