@@ -70,10 +70,13 @@ def visualize_graph(G: nx.Graph, labels=None):
             font_color="white",
             edge_color=edge_weights, 
             width=2,
-            edge_cmap=plt.cm.Reds_r,
+            edge_cmap=plt.cm.Reds,
             labels=labels)
     
-    plt.title("Graph of Time Series Data Correlation (Pearson Dissimilarity)")
+    edge_labels = {(u, v): f"{d['weight']:.2f}" for u, v, d in G.edges(data=True)}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='black', font_size=9)
+    
+    plt.title("Graph of Time Series Data Correlation (Pearson Similarity)")
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     filename = f"graph_visualization_{date}.png"

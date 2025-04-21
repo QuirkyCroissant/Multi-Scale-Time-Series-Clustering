@@ -36,8 +36,8 @@ def compute_distance_matrix(sequences: np.ndarray,
                             method=config.DEFAULT_DISSIMILARITY,
                             normalize=False):
     '''
-    Computes the pair-wise dissimilarity matrix for a set of time series. Supports Fast-Dynamic Time
-    Warping(DTW or fastDTW) and Pearson Correlation as dissimilarity measures. 
+    Computes the pair-wise (dis)similarity matrix for a set of time series. Supports Fast-Dynamic Time
+    Warping(DTW or fastDTW) dissimilarity and Pearson Correlation as similarity measures. 
     It utilizises numerous performant methodologies to realise it, like only computing the upper 
     triangular matrix(pairs variable) of the symmetric distance matrix and it leverages multithreading 
     functionality provided by the joblib library.
@@ -56,7 +56,7 @@ def compute_distance_matrix(sequences: np.ndarray,
     elif method == "dtw":
         distance_func = lambda x, y: dtw(x, y).distance
     elif method == "pearson":
-        distance_func = lambda x, y: 1 - pearsonr(x, y)[0]
+        distance_func = lambda x, y: max(pearsonr(x, y)[0] , 0)
     else:
         raise ValueError(f"Unsupported dissimilarity measure. {method}")
         

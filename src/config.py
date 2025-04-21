@@ -123,8 +123,8 @@ DEFAULT_AMOUNT_OF_CLUSTERS = 4
 
 ### Graph parameters
 
-# lets keep only edges which have a correlation of at least 40%
-GRAPH_THRESHOLD = 0.7
+# lets keep only edges which have a similarity of at least 30%
+GRAPH_THRESHOLD = 0.3
 DEFAULT_GRAPH_DISSIMILARITY = DISSIMILARITY_MEASURES[2]
 
 
