@@ -1,4 +1,6 @@
+import time
 import networkx as nx
+import community as community_louvain
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
@@ -6,10 +8,12 @@ import os
 
 import config
 from data_clustering import compute_distance_matrix
-from project_utilities import (import_restored_data_as_numpy,
+from project_utilities import (export_clustering_log, import_restored_data_as_numpy, 
+                               prepare_graph_clustering_log,
                                traverse_to_method_dir,
                                export_distance_matrix,
-                               import_distance_matrix)
+                               import_distance_matrix,
+                               plot_graph_clustering_results)
 
 
 def transform_series_into_network(series_matrix: np.ndarray, 
@@ -92,13 +96,40 @@ def visualize_graph(G: nx.Graph, labels=None):
     print(f"Graph visualization saved to: {plot_path}")
     
     
-def apply_graph_clustering():
-    pass
+def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_METHOD):
+    '''Applies graph clustering algorithms depending on the input parameter: louvain uses the popular 
+    modularity based algorithm, modularity uses a greedy heuristic and label uses label propagation'''
+
+    start = time.time()
+
+    if method == "louvain":
+        partition = community_louvain.best_partition(G, weight='weight')
+        labels = [partition[node] for node in G.nodes]
+        
+    elif method == "modularity":
+        communities = nx.algorithms.community.greedy_modularity_communities(G, weight='weight')
+        labels = [None] * len(G)
+        for cid, community in enumerate(communities):
+            for node in community:
+                labels[node] = cid
     
+    elif method == "label":
+        communities = nx.algorithms.community.asyn_lpa_communities(G, weight='weight')
+        for cid, community in enumerate(communities):
+            for node in community:
+                labels[node] = cid
+    
+    else:
+        raise ValueError(f"Unsupported graph clustering method: {method}")
+    
+
+    return labels, time.time() - start
 
 
 def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
+                            clustering_method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
                             compute_dist=False,
+                            is_normalized=False
                             ):
     '''Beginns Graph-Analysis Portion of the project. Starts with the transformation of 
     Time Series Data into Nodes and uses Pearson Correlation as Edge weight. After dropping
@@ -116,12 +147,31 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
     
     
     visualize_graph(series_network)
+    
+    graph_cluster_labels, comp_time = apply_graph_clustering(series_network)
 
-    # TODO: Implement Graph Clustering
-    apply_graph_clustering()
+    series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
+            config.TO_AGGREGATED_DATA_DIR, 
+            aggregation_method
+        ))
     
-    
+    plot_graph_clustering_results(series_network, 
+                                  series_matrix, 
+                                  graph_cluster_labels,
+                                  config.DEFAULT_GRAPH_CLUSTERING_METHOD
+                                  )
+    k = len(np.unique(graph_cluster_labels))
+    log = prepare_graph_clustering_log(clustering_method=clustering_method,
+                                            edge_weight_metric=config.DEFAULT_GRAPH_DISSIMILARITY,
+                                            threshold=config.GRAPH_THRESHOLD,
+                                            normalized=is_normalized,
+                                            n_clusters=k,
+                                            labels=graph_cluster_labels,
+                                            cluster_sizes=[list(graph_cluster_labels).count(i) for i in range(k)] if k is not None else None,
+                                            radius=config.FASTDTW_RADIUS,
+                                            computational_time=comp_time,
+                                            random_seed=config.RANDOM_SEED)
         
-
+    export_clustering_log(log)
 
 

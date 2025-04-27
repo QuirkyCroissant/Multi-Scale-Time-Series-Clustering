@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+import networkx as nx
 from typing import List, Optional, Dict, Union
 from scipy.stats import zscore
 from scipy.cluster.hierarchy import dendrogram, linkage, cophenet
@@ -544,3 +546,53 @@ def plot_hierachical_results(series_matrix,
     plt.savefig(plot_path)
     plt.close()
     print(f"Multi-series clustering plot saved to: {plot_path}")
+
+
+def plot_graph_clustering_results(G: nx.Graph, 
+                            series_matrix: np.ndarray, 
+                            cluster_labels: list[int], 
+                            method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
+                            dist="pearson",
+                            title_suffix: str = ""):
+
+    n_clusters = len(set(cluster_labels))
+    colors = plt.cm.get_cmap("tab10", n_clusters)
+    time_axis = np.arange(series_matrix.shape[1])
+
+    fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+
+    ### Graph Network ###
+    pos = nx.kamada_kawai_layout(G)
+    node_colors = [colors(label) for label in cluster_labels]
+
+    nx.draw(G, pos,
+            ax=axs[0],
+            node_color=node_colors,
+            with_labels=True,
+            edge_color="#888",
+            font_color="white",
+            node_size=500,
+            font_size=8)
+
+    axs[0].set_title(f"Graph View of Time Series Clusters{title_suffix}")
+
+    ### Full Time Series coloured by cluster ###
+    for idx, (series, label) in enumerate(zip(series_matrix, cluster_labels)):
+        axs[1].plot(time_axis, series, color=colors(label), alpha=0.7, linewidth=1)
+
+    axs[1].set_title("Time Series Colored by Cluster")
+    axs[1].set_xlabel("Time (Days)")
+    axs[1].set_ylabel("Value")
+    axs[1].grid(True)
+
+    fig.tight_layout()
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"graph_{method}_clustering_{dist}_{date}.png"
+
+    plot_path = os.path.join(
+        config.TO_GRAPH_ANALYSIS_PLOT_DIR, 
+        filename)
+
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"Graph-based clustering visualization saved to: {plot_path}")
