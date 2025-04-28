@@ -46,7 +46,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
 - **Develop clustering algorithms:** Create/apply methods that effectively cluster time-series data with different scalings.
 - **Evaluate performance:** Test and validate the algorithms on various datasets.
-- **Extension (Work-in-Progress):** Represent time series as nodes in a graph with Pearson-based dissimilarities as edge weights, apply graph-based clustering, and compare results with time-series-based clustering.
+- **Extension:** Completed graph representation of time series and graph-based clustering (Louvain, Modularity, Label Propagation). 
+- **Upcoming:** Currently working on evaluation and automated comparison of clustering results.
 
 ## Project Structure
 
@@ -70,15 +71,20 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── distance_matrices		# Exported dissimilarity/distance matrices used for clustering
 │      ├── legacy/              # Deprecated distance matrices
 │   ├── logs					# Log files from various experimental operations
+│      ├── clustering
+│            ├── default/              # Stores traditional time series clustering results
+│            ├── graph/                # Stores graph-based clustering results on transformed data
 │      ├── interpolations
-│      ├── legacy/              # Deprecated log files
+│            ├── <method>/            # Stores interpolation accuracy of demo data
+│            ├── legacy/              # Deprecated log files
 │   ├── plots					# Plot diagrams from various experimental operations
 │      ├── clustering/
 │            ├── legacy/              # Deprecated plot diagrams
 │            ├── ...
-│      ├── comparisons/
-│      ├── corrupted_data/
-│      ├── generated_data/
+│      ├── comparisons/               # compare aggregated vs real demo data
+│      ├── corrupted_data/            # Plots show faulty synthetic time series(demo)
+│      ├── generated_data/            # Plots show generated synthetic time series(demo)
+│      ├── graph_analysis/            # graph based analysis plots
 │      ├── interpolations/
 │            ├── <method>/
 │            ├── legacy/              
@@ -93,7 +99,9 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project
 └│ CHANGELOG.md                	# Documents releases and changes 
+└│ LICENSE                	  # Repo License
 └│ README.md                	# Project overview and instructions
+└│ requirements.txt               # Contain all external dependancies for the project
 ```
 
 
@@ -147,7 +155,10 @@ The flowchart below summarizes the main pipelines of the project:
 *Figure: Overall Projects Pipeline Flowchart*
 
 ## Legacy
-Legacy prototype available under [prototype-v1](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v1)
+Legacy prototypes are available under:
+- [prototype-v1](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v1) - single time series segmentation clustering
+- [prototype-v2](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v2) - multi-series time series and graph-based clustering
+
 
 ## License
 

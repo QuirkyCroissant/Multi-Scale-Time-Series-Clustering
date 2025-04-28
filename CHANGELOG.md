@@ -4,16 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## prototype-v3 - Upcoming
-
-### Added
-- Graph transformation: time series to node mapping using Pearson correlation dissimilarity
-- Visualization module for graph structures with threshold-based edge sparsification
-- Export of graph-based dissimilarity matrix
+## v1.0.0 - Upcoming
 
 ### Planned
-- Graph clustering module (e.g., community detection)
-- Comparison of graph-based clusters with DTW/FastDTW-based results
+- Addition of evaluation mode for clustering results (Rand Index, Adjusted Rand, NMI, ARI)
+- Automation of experimental runs with flexible override of key config variables via CLI (optional)
+- Separation of analysis workflows for synthetic datasets (with ground truth) vs. production datasets (without ground truth)
+- Refined export of interpolation evaluation (MAPE, MSE) for synthetic experiments
+- Distinction between graph-based and classic clustering workflows
+
+---
+
+## [prototype-v3](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v3) - 2025-04-28
+
+### Added
+- Graph transformation: time series to node mapping using Pearson similarity
+- Graph clustering integration: Louvain, Greedy Modularity Maximation, and Label Propagation (networkx)
+- Visualization of graph structures and clusters
+- Exported graph-based distance matrices and cluster assignment logs
+- Distinction between graph-based and classic clustering workflows
+- Extensive log export for clustering metadata (distance measure, clustering method, runtime, etc.)
+
+### Changed
+- Unified distance measures: Pearson similarity without (1-p), negative correlations capped at 0
+- Improved plot generation and directory structure for cleaner experiment separation
 
 ---
 

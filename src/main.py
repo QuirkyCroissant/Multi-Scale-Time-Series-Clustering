@@ -157,10 +157,9 @@ def run_prototype(generate_data,
                     )
                 del time_series_dict, aggregated_df
 
-    # TODO: get rid of the command workaround to not only cluster graphs
-    #print("Triggering Clustering Pipeline")
-    #aggregation_method = clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
-    aggregation_method = config.DEFAULT_INTERPOLATION_METHOD
+    # TODO: seperate classical time series and graph based workflow
+    print("Triggering Clustering Pipeline")
+    aggregation_method = clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
 
     print("Triggering Graph Analysis Pipeline")
     graph_clustering_pipeline(aggregation_method=aggregation_method ,comp_dist=compute_dist)
