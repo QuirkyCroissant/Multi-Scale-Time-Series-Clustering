@@ -115,6 +115,7 @@ def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_M
     
     elif method == "label":
         communities = nx.algorithms.community.asyn_lpa_communities(G, weight='weight')
+        labels = [None] * len(G)
         for cid, community in enumerate(communities):
             for node in community:
                 labels[node] = cid

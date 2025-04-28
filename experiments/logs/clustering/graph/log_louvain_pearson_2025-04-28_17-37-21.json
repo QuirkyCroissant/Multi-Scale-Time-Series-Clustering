@@ -1,0 +1,31 @@
+{
+    "clusteringMethod": "louvain",
+    "distanceMeasure": "pearson",
+    "threshold": 0.3,
+    "normalized": false,
+    "nClusters": 5,
+    "dataQuantity": 10,
+    "labels": [
+        0,
+        3,
+        2,
+        3,
+        4,
+        3,
+        2,
+        3,
+        1,
+        3
+    ],
+    "clusterSizes": [
+        1,
+        1,
+        2,
+        5,
+        1
+    ],
+    "radius": 3,
+    "timeStamp": "2025-04-28_17-37-21",
+    "computationalTime": 0.006331443786621094,
+    "randomSeed": 69
+}

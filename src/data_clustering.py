@@ -24,13 +24,17 @@ import time
 
 
 def convert_to_segmented_series(data, window_length=config.SEGMENTATION_WINDOW):
-    '''Method takes in time series data in form of a dataframe and converts it into a 2d numpyarray
+    '''
+    Deprecated since prototype-v1
+    
+    Method takes in time series data in form of a dataframe and converts it into a 2d numpyarray
     and returns a segmented 2d numpy array by a segmented window length defined by the passed 
     argument. The if there is not enough data to be fully segmented in the series, the data points 
     that do not fully reach a new segmentation group will get dropped. 
     
     eg.: if we have 100 entries and a segment length of 24, than we will have 4 total 
-    segments, which equals to 24*4= 96 segmented data pints, last 4 get dropped.'''
+    segments, which equals to 24*4= 96 segmented data pints, last 4 get dropped.
+    '''
     data = np.asarray(data)
     total_segmentations = len(data) // window_length
     return data[:total_segmentations * window_length].reshape(-1, window_length)

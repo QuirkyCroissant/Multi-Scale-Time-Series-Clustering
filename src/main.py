@@ -77,7 +77,7 @@ def clustering_pipeline(comp_dist=False, normalize=False) -> str:
     
 def graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                               comp_dist=False):
-    initiate_graph_analysis(aggregation_method, comp_dist)
+    initiate_graph_analysis(aggregation_method=aggregation_method, compute_dist=comp_dist)
     
 
 def run_prototype(generate_data, 
