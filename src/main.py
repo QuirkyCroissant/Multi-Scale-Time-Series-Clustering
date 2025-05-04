@@ -1,4 +1,5 @@
 import argparse
+from data_evaluation import initialise_specific_evaluation
 from data_generation import create_multiple_time_series, convert_time_series_to_dataframe
 from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
@@ -176,9 +177,10 @@ def run_final():
 
 def run_evaluation(mode: str, metrics=[]):
     '''Executes Evaluation modeus that looks at the already existing log files and evaluates the results'''
+    print("Running Application in Evaluation mode:")
     print(f"Running Evaluation: {mode}")
     print(f"Using metrics: {metrics}")
-    pass
+    initialise_specific_evaluation(mode, metrics)
 
 
 def main():

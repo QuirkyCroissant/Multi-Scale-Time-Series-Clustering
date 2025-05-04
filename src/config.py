@@ -77,7 +77,8 @@ TO_INTERPOLATION_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plot
 TO_CLUSTERING_PLOTS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "clustering")
 TO_GRAPH_ANALYSIS_PLOT_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "plots", "graph_analysis")
 
-
+TO_EVAL_INTERPOLATION_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "evaluations", "interpolations")
+TO_EVAL_CLUSTERING_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "evaluations", "clustering")
 
 
 
@@ -140,5 +141,7 @@ INTERPOLATION_METRICS = ['MSE', 'MAPE']
 CLUSTERING_EXTERNAL_METRICS = ['ARI', 'RAND', 'ARAND', 'NMI']
 CLUSTERING_INTERNAL_METRICS = ['silhouette', 'modularity']
 
+RESTORATION_RAW_TABLE_EXPORT_NAME = "aggregation_raw_metric_table"
+RESTORATION_PRETTY_TABLE_EXPORT_NAME = "aggregation_pretty_metric_table"
 
 
