@@ -165,64 +165,122 @@ def run_prototype(generate_data,
     graph_clustering_pipeline(aggregation_method=aggregation_method ,comp_dist=compute_dist)
 
     
-    
 
 def run_final():
-    '''production ready implementation which will be 
+    '''TODO: production ready implementation which will be 
        implemented after an sufficient prototyp'''
     print("Running Application in Production mode:")
     pass
+
+
+
+def run_evaluation(mode: str, metrics=[]):
+    '''Executes Evaluation modeus that looks at the already existing log files and evaluates the results'''
+    print(f"Running Evaluation: {mode}")
+    print(f"Using metrics: {metrics}")
+    pass
+
 
 def main():
 
     parser = argparse.ArgumentParser(
         description="Main Script for Time Series Clustering"
     )
+    subparsers = parser.add_subparsers(dest="mode", required=True)
 
-    parser.add_argument(
-        "--mode",
-        type=str,
-        default="demo",
-        required=True,
-        choices=["demo", "prod"],
-        help="Select the mode: 'demo' for synthetic dataset generation and testing, 'prod' for processing the pre-specified dataset."
-    )
+    # ----------------
+    # Demo Mode
+    # ----------------
 
-    parser.add_argument(
+    parser_demo = subparsers.add_parser("demo", help="Synthetic dataset generation and testing")
+
+    parser_demo.add_argument(
         "--new_data",
         action="store_true",
-        help="Include this flag (only in demo mode) to generate corrupted, synthetic data."
+        help="Include this(only in demo mode) to generate corrupted, synthetic data."
     )
-
-    parser.add_argument(
+    
+    parser_demo.add_argument(
         "--comp_img",
         action="store_true",
-        help="Saves comparisson plot of synthetic time series and its different versions downstream. (experiments/plots)"
+        help="Save comparison plot of synthetic time series versions (experiments/plots)"
     )
 
-    parser.add_argument(
+    parser_demo.add_argument(
         "--restore",
         action="store_true",
-        help="Include this flag to aggregate, interpolate and save faulty " \
-        "input data that will be used for clustering. (data/restored)"
+        help="Aggregate, interpolate and save faulty input data (data/restored)"
     )
 
-    parser.add_argument(
+    parser_demo.add_argument(
         "--dist",
         action="store_true",
-        help="Include this flag to compute and save the dissimilarity measure. (experiments/distance_matrices)"
+        help="Compute and save the (dis)-/similarity measures (experiments/distance_matrices)"
     )
 
-    parser.add_argument(
+    parser_demo.add_argument(
         "--normalized",
         action="store_true",
-        help="Apply Z-normalization to each time series segment before computing or using distances."
+        help="Apply Z-normalization to each time series before clustering"
     )
 
-    args = parser.parse_args()
+    # ----------------
+    # Prod Mode
+    # ----------------
 
-    if args.mode != "demo" and args.new_data:
-        parser.error("The --new_data flag is only allowed when --mode is set to demo.")
+    parser_prod = subparsers.add_parser("prod", help="Run production mode for real datasets")
+    
+    # TODO: TBD same as demo aggregation, dist and clustering arguments
+
+    # ----------------
+    # Eval Mode
+    # ----------------
+    parser_eval = subparsers.add_parser("eval", help="Analyze prior results and clustering logs")
+    eval_subparsers = parser_eval.add_subparsers(dest="eval_mode", required=True)
+
+    # Restoration Demo Eval
+    parser_eval_agg = eval_subparsers.add_parser(
+        "aggregation", 
+        help="Evaluate interpolation/restoration results"
+    )
+    parser_eval_agg.add_argument(
+        "--metrics", nargs='+', 
+        required=True,
+        choices=config.INTERPOLATION_METRICS,
+        help="Metrics to compute(MSE, MAPE)"
+    )
+
+    # Distance/Clustering Demo Eval
+    parser_eval_cluster_demo = eval_subparsers.add_parser(
+        "clustering_demo", 
+        help="Evaluate synthetic clustering results"
+    )
+    parser_eval_cluster_demo.add_argument(
+        "--metrics", nargs='+', 
+        required=True, 
+        choices=config.CLUSTERING_EXTERNAL_METRICS,
+        help="Metrics to compute (ARI, (A)-/RAND, NMI etc)"
+    )
+
+    # Clustering Prod
+    # TODO: Check for approval
+
+    #parser_eval_cluster_prod = eval_subparsers.add_parser(
+    #    "clustering_prod", 
+    #    help="Evaluate production clustering results"
+    #)
+    #parser_eval_cluster_prod.add_argument(
+    #    "--metrics", nargs='+', 
+    #    required=True, 
+    #    choices=config.CLUSTERING_INTERNAL_METRICS,
+    #    help="Metrics to compute (Silhouette, Modularity etc)"
+    #)
+
+    # ----------------
+    # Handle Arguments
+    # ----------------
+
+    args = parser.parse_args()
 
     if args.mode == "demo":
         run_prototype(
@@ -234,6 +292,16 @@ def main():
         )
     elif args.mode == "prod":
         run_final()
+
+    elif args.mode == "eval":
+        
+        if args.eval_mode == "aggregation":
+            run_evaluation(mode=args.eval_mode, metrics=args.metrics)
+        elif args.eval_mode == "clustering_demo":
+            run_evaluation(mode=args.eval_mode, metrics=args.metrics)
+        elif args.eval_mode == "clustering_prod":
+            run_evaluation(mode=args.eval_mode, metrics=args.metrics)
+
     else:
         parser.print_help()
 

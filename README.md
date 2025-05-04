@@ -47,7 +47,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
 - **Develop clustering algorithms:** Create/apply methods that effectively cluster time-series data with different scalings.
 - **Evaluate performance:** Test and validate the algorithms on various datasets.
 - **Extension:** Completed graph representation of time series and graph-based clustering (Louvain, Modularity, Label Propagation). 
-- **Upcoming:** Currently working on evaluation and automated comparison of clustering results.
+- **Evaluation (Work-in-Progress):** Add comprehensive evaluation pipeline to automatically analyze clustering and restoration accuracy across demo (synthetic) and production (real-world) datasets.
+
 
 ## Project Structure
 
@@ -129,23 +130,41 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
 4. **Run the project:**
 
-    Run the application by specifying the mode and additional optional flags:
+    You can now run the project in 3 main modes, specified by the following CLI arguments:
     
     ```bash
-    # For demo (prototype) mode with new synthetic data and various plots(without normalization):
-    python src/main.py --mode demo --new_data --comp_img
-    
-    # For production mode:
-    python src/main.py --mode prod
+    # DEMO (Synthetic Pipeline)
+    python src/main.py demo --new_data --restore --dist --comp_img
+
+    # PRODUCTION (Real datasets - currently placeholder)
+    python src/main.py prod
+
+    # EVALUATION (Analyse restoration and clustering metrics)
+    python src/main.py eval aggregation --metrics MSE MAPE
+    python src/main.py eval clusteringDemo --metrics ARI RAND NMI
+    python src/main.py eval clusteringProd --metrics Silhouette Modularity
     ```
 
     **Available Command-Line Flags:**
-    - `--mode`: **Required.** Choose `demo` for synthetic dataset generation, corruption, restoration, and clustering; or `prod` for processing a pre-specified dataset.
-    - `--new_data`: **Optional (demo mode only).** Generates new synthetic data (clean and corrupted). Cannot be used with production mode.
-    - `--comp_img`: **Optional.** Saves comparison plots of the time series at various pipeline stages (e.g., clean vs. corrupted, and clean vs. interpolated).
-    - `--restore`: **Optional.** Aggregate, interpolate, and save faulty input data that will be used for clustering (saved in `data/restored`).
-    - `--dist`: **Optional.** Compute and save the dissimilarity measure (saved in `experiments/distance_matrices`).
-    - `--normalized`: **Optional.** Runs the application in (non-)normalized mode, depending on users cluster usecase(shape or scale based clustering).
+    - `--mode`: **Required** `demo` (synthetic pipeline), `prod` (real data pipeline), or `eval` (analyses previous results).
+
+    - **DEMO Mode Options:**
+      - `--new_data`: **Optional** Generates new synthetic data (clean and corrupted).
+      - `--restore`: **Optional** Aggregates/interpolates/augments, and saves repaired faulty input data, that later will be used for clustering (saved in `data/restored`).
+      - `--dist`: **Optional** Computes and saves the (dis-)/similarity measure (saved in `experiments/distance_matrices`).
+      - `--normalized`: **Optional** Runs the application in (non-)normalized mode, depending on users cluster usecase(shape or scale based clustering).
+      - `--comp_img`: **Optional** Saves comparison plots of the time series at various pipeline stages (e.g., clean vs. corrupted, and clean vs. interpolated).
+    
+    - **EVAL Mode Options (sub-modes):**
+      - `aggregation`: Analyses restoration/interpolation/augmentation metrics
+        - `MSE`, `MAPE`
+      - `clustering_demo`: Analyses synthetic clustering quality metrics
+        - `ARI`, `RAND`, `NMI`
+      - `clustering_prod`: Analyses provided real-world clustering quality metrics
+        - `Silhouette`, `Modularity`
+      - `--metrics`: **Required** List of evaluation metrics to compute
+
+
 
 ## Application Runtime Workflow
 
@@ -156,8 +175,9 @@ The flowchart below summarizes the main pipelines of the project:
 
 ## Legacy
 Legacy prototypes are available under:
+- [prototype-v3](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v3) - graph transformation and graph-based clustering
+- [prototype-v2](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v2) - shift to multi-series time series support
 - [prototype-v1](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v1) - single time series segmentation clustering
-- [prototype-v2](https://github.com/QuirkyCroissant/Multi-Scale-Time-Series-Clustering/tree/prototype-v2) - multi-series time series and graph-based clustering
 
 
 ## License
