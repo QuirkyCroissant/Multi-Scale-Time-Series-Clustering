@@ -29,23 +29,31 @@ def make_interpolation_df_humanreadable(evaluated_dataframe):
     def format_mean_std(mean, std, decimals=4):
         return f"{mean:.{decimals}f} ± {std:.{decimals}f}"
 
-    evaluated_dataframe["MAPE (Mean ± Std)"] = evaluated_dataframe.apply(
-        lambda row: format_mean_std(row["mape_mean"], row["mape_std"]), 
-        axis=1
-    )
-    evaluated_dataframe["MSE (Mean ± Std)"] = evaluated_dataframe.apply(
-        lambda row: format_mean_std(row["mse_mean"], row["mse_std"]), 
-        axis=1
-    )
+    df_pretty = evaluated_dataframe[["method"]].copy()
 
-    df_pretty = evaluated_dataframe[["method", "MAPE (Mean ± Std)", "MSE (Mean ± Std)"]].sort_values("method")
-    return df_pretty
+    if "mape_mean" in evaluated_dataframe.columns and "mape_std" in evaluated_dataframe.columns:
+        df_pretty["MAPE (Mean ± Std)"] = evaluated_dataframe.apply(
+            lambda row: format_mean_std(row["mape_mean"], row["mape_std"]), 
+            axis=1
+        )
+
+    if "mse_mean" in evaluated_dataframe.columns and "mse_std" in evaluated_dataframe.columns:
+        df_pretty["MSE (Mean ± Std)"] = evaluated_dataframe.apply(
+            lambda row: format_mean_std(row["mse_mean"], row["mse_std"]), 
+            axis=1
+        )
+
+    return df_pretty.sort_values("method")
 
 
 def evaluate_restoration_results(metrics):
     '''Searches for the latest log files, per interpolation method and aggregates the values into several output 
     tables to visualise interpolation performance per method, those tables will get exported into dedicated directories
     to save them after the runtime.'''
+
+    # export metrics filtering using regex patterns
+    pattern = '|'.join(map(re.escape,metrics))
+    export_regex = re.compile(pattern, flags=re.IGNORECASE) 
 
     results = []
     methods = config.INTERPOLATION_METHODS
@@ -92,19 +100,22 @@ def evaluate_restoration_results(metrics):
     timestamp=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     df_results = pd.DataFrame(results).sort_values("method")
+    filtered_columns = [col for col in df_results.columns if export_regex.search(col)]
+    df_results = df_results[["method"] + filtered_columns]
+
     export_dataframe_to_csv(df=df_results, 
                             filename=f"{config.RESTORATION_RAW_TABLE_EXPORT_NAME}_{timestamp}", 
                             output_dir=config.TO_EVAL_INTERPOLATION_DIR,
                             eval=True)
     
     df_humanreadable = make_interpolation_df_humanreadable(df_results)
+    filtered_columns_readable = [col for col in df_humanreadable.columns if export_regex.search(col)]
+    df_humanreadable = df_humanreadable[["method"] + filtered_columns_readable]
     print(df_humanreadable)
     export_dataframe_to_csv(df=df_humanreadable, 
                             filename=f"{config.RESTORATION_PRETTY_TABLE_EXPORT_NAME}_{timestamp}", 
                             output_dir=config.TO_EVAL_INTERPOLATION_DIR,
                             eval=True)
-    
-    #convert_dataframe_into_latex(df_humanreadable)
 
     print("Evaluation of Interpolation results concluded.")
             
@@ -115,7 +126,8 @@ def evaluate_restoration_results(metrics):
 
 
 def initialise_specific_evaluation(mode: str, metrics=[]):
-    '''TODO: TBD'''
+    '''TODO: Clustering DEMO and Prod
+    Initiates evaluation mode for either the interpolation or clustering, based on passed program arguments'''
     if mode == "aggregation":
         check_metrics(mode, metrics)
         evaluate_restoration_results(metrics)
