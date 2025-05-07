@@ -49,7 +49,7 @@ def evaluate_restoration_results(metrics):
 
     results = []
     methods = config.INTERPOLATION_METHODS
-    log_date_pattern = re.compile(r'accuracy_log_ts_\d+_[a-z]+_(\d{4}-\d{2}-\d{2})\.json')
+    log_date_pattern = re.compile(r'accuracy_log_ts_\d+_[\w]+_(\d{4}-\d{2}-\d{2})\.json')
     
     def get_latest_date(log_dir):
         dates = []
@@ -104,7 +104,7 @@ def evaluate_restoration_results(metrics):
                             output_dir=config.TO_EVAL_INTERPOLATION_DIR,
                             eval=True)
     
-    convert_dataframe_into_latex(df_humanreadable)
+    #convert_dataframe_into_latex(df_humanreadable)
 
     print("Evaluation of Interpolation results concluded.")
             
