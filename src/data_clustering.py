@@ -185,7 +185,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
 
 def start_clustering_pipeline(compute_dist=False, 
                               normalize=False,
-                              aggregation_method=config.DEFAULT_INTERPOLATION_METHOD) -> str:
+                              aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
     '''Starts the whole clustering process, passing aggregated data through a segmentation preprocessing
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
     the given distance matrix, also able to differenciate between data normalization or not.'''
@@ -267,5 +267,4 @@ def start_clustering_pipeline(compute_dist=False,
     else:
         raise ValueError(f"Unsupported clustering method. Supported methods are: {config.CLUSTERING_METHODS}")
     
-    return aggregation_method
     

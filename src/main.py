@@ -69,12 +69,12 @@ def aggregation_pipeline(is_demo_execution, activate_restoration=False):
         restore_time_series_data(is_demo_execution)
     
 
-def clustering_pipeline(comp_dist=False, normalize=False) -> str:
+def clustering_pipeline(comp_dist=False, normalize=False):
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
     matrix is used for the subsequent clustering. Returns which aggregation method was used,
     on which clustering was used.'''
-    return start_clustering_pipeline(comp_dist, normalize)
+    start_clustering_pipeline(comp_dist, normalize)
     
 def graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                               comp_dist=False):
@@ -85,7 +85,8 @@ def run_prototype(generate_data,
                   restore=False, 
                   compute_dist=False,
                   normalize=False,
-                  plot=False
+                  plot=False,
+                  cluster_methodology=config.DEFAULT_CLUSTERING_METHOD
                   ):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
@@ -144,7 +145,8 @@ def run_prototype(generate_data,
                 
                 aggregated_df = import_dataframe_from_csv(
                     filename = f"{config.SYN_EXPORT_DATA_NAME}_{i}_{method}", 
-                    input_dir = traverse_to_method_dir(config.TO_AGGREGATED_DATA_DIR, method))
+                    input_dir = traverse_to_method_dir(config.TO_AGGREGATED_DATA_DIR, method)
+                    )
                 
                 time_series_dict = {
                     f"Clean_TS{i}": (clean_df["time"], clean_df["value"]),
@@ -158,12 +160,12 @@ def run_prototype(generate_data,
                     )
                 del time_series_dict, aggregated_df
 
-    # TODO: seperate classical time series and graph based workflow
-    print("Triggering Clustering Pipeline")
-    aggregation_method = clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
-
-    print("Triggering Graph Analysis Pipeline")
-    graph_clustering_pipeline(aggregation_method=aggregation_method ,comp_dist=compute_dist)
+    if cluster_methodology in config.CLUSTERING_METHODS:
+        print("Triggering Clustering Pipeline")
+        clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
+    elif cluster_methodology in config.GRAPH_CLUSTERING_METHODS:
+        print("Triggering Graph Analysis Pipeline")
+        graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD ,comp_dist=compute_dist)
 
     
 
@@ -182,19 +184,50 @@ def run_evaluation(mode: str, metrics=[]):
     print(f"Using metrics: {metrics}")
     initialise_specific_evaluation(mode, metrics)
 
+def override_config_with_args(args):
+    
+    if getattr(args, "gen_amount", None) is not None:
+        config.AMOUNT_OF_INDIVIDUAL_SERIES = args.gen_amount
+
+    if getattr(args, "restore_method", None) is not None:
+        config.DEFAULT_INTERPOLATION_METHOD = args.restore_method
+
+    if getattr(args, "dist_method", None) is not None:
+        config.DEFAULT_DISSIMILARITY = args.dist_method
+    if getattr(args, "dist_radius", None) is not None:
+        config.FASTDTW_RADIUS = args.dist_radius
+
+    if getattr(args, "cluster_method", None) is not None:
+        config.DEFAULT_CLUSTERING_METHOD = args.cluster_method
+    if getattr(args, "cluster_k", None) is not None:
+        config.DEFAULT_AMOUNT_OF_CLUSTERS = args.cluster_k
+
 
 def main():
 
     parser = argparse.ArgumentParser(
         description="Main Script for Time Series Clustering"
     )
+
+    # ----------------
+    # Global Config Overwrites -> put into a parent parser
+    # ----------------
+
+    global_parser = argparse.ArgumentParser(add_help=False)
+    global_parser.add_argument("--gen_amount", type=int, help="Override amount of synthetic time series to generate")
+    global_parser.add_argument("--restore_method", type=str, choices=config.INTERPOLATION_METHODS, help="Override interpolation method for restoration")
+    global_parser.add_argument("--dist_method", type=str, choices=config.DISSIMILARITY_MEASURES, help="Override dissimilarity method (fastDTW, dtw, pearson)")
+    global_parser.add_argument("--dist_radius", type=int, help="Override radius used for fastDTW")
+    global_parser.add_argument("--cluster_method", type=str, choices=config.CLUSTERING_METHODS + config.GRAPH_CLUSTERING_METHODS, help="Override clustering method")
+    global_parser.add_argument("--cluster_k", type=int, help="Override k amount for clustering")
+
     subparsers = parser.add_subparsers(dest="mode", required=True)
 
     # ----------------
     # Demo Mode
     # ----------------
 
-    parser_demo = subparsers.add_parser("demo", help="Synthetic dataset generation and testing")
+    parser_demo = subparsers.add_parser("demo", parents=[global_parser], help="Synthetic dataset generation and testing")
 
     parser_demo.add_argument(
         "--new_data",
@@ -215,7 +248,7 @@ def main():
     )
 
     parser_demo.add_argument(
-        "--dist",
+        "--distance",
         action="store_true",
         help="Compute and save the (dis)-/similarity measures (experiments/distance_matrices)"
     )
@@ -230,7 +263,7 @@ def main():
     # Prod Mode
     # ----------------
 
-    parser_prod = subparsers.add_parser("prod", help="Run production mode for real datasets")
+    parser_prod = subparsers.add_parser("prod", parents=[global_parser], help="Run production mode for real datasets")
     
     # TODO: TBD same as demo aggregation, dist and clustering arguments
 
@@ -284,13 +317,23 @@ def main():
 
     args = parser.parse_args()
 
+    if args.dist_radius is not None and args.dist_method != "fastDTW":
+        parser.error("--dist_radius can only be used if --dist_method is 'fastDTW'")
+    
+    if args.cluster_k is not None:
+        if args.cluster_method is None or args.cluster_method not in ['kmedoids', "hierachical"]:
+            parser.error("--cluster_k can only be used if --cluster_method is 'kmedoids' or 'hierachical'")
+
+    override_config_with_args(args)
+
     if args.mode == "demo":
         run_prototype(
             generate_data=args.new_data, 
             restore=args.restore,
-            compute_dist=args.dist,
+            compute_dist=args.distance,
             normalize=args.normalized,
-            plot=args.comp_img
+            plot=args.comp_img,
+            cluster_methodology=args.cluster_method 
         )
     elif args.mode == "prod":
         run_final()

@@ -145,8 +145,29 @@ This repository contains code and documentation for my bachelor thesis on cluste
     python src/main.py eval clusteringProd --metrics Silhouette Modularity
     ```
 
+    **Global Overrides (optional in demo/prod mode)**
+
+    These flags allow overriding default pipeline configuration parameters without modifying source code:
+    - `--gen_amount`: Number of synthetic time series to generate (default: `config.AMOUNT_OF_INDIVIDUAL_SERIES`).
+
+    - `--restore_method`: Interpolation(pandas) method to use during restoration (`linear`, `time`, `index`, etc.).
+
+    - `--dist_method`: Distance metric to use (`fastDTW`, `dtw`, `pearson`).
+
+    - `--dist_radius`: FastDTW radius (only applicable if `--dist_method fastDTW` is selected).
+
+    - `--cluster_method`: Clustering method (`kmedoids`, `hierarchical`, `louvain`, `modularity`, `label`).
+
+    - `--cluster_k`: Cluster amount (`k`) (only applicable if `--cluster_method` is `kmedoids` or `hierarchical`).
+
+    Example usage of global overrides:
+    ```bash
+    python src/main.py demo --dist_method fastDTW --dist_radius 5 --cluster_method kmedoids --cluster_k 4
+    ```
+
+
     **Available Command-Line Flags:**
-    - `--mode`: **Required** `demo` (synthetic pipeline), `prod` (real data pipeline), or `eval` (analyses previous results).
+    - **Required** `demo` (synthetic pipeline), `prod` (real data pipeline), or `eval` (analyses previous results).
 
     - **DEMO Mode Options:**
       - `--new_data`: **Optional** Generates new synthetic data (clean and corrupted).
