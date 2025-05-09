@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 
 
-def demo_generation_pipeline():
+def demo_generation_pipeline(N=config.AMOUNT_OF_INDIVIDUAL_SERIES):
     '''synthetic data generation pipeline'''
-    series_matrix = create_multiple_time_series()
+    series_matrix = create_multiple_time_series(N)
     for i in range(series_matrix.shape[0]):
         plot_time_series(
             y=series_matrix[i], 
@@ -99,7 +99,7 @@ def run_prototype(generate_data,
     if generate_data:
         print("Triggering generation of synthetic dataset")
         
-        demo_generation_pipeline()
+        demo_generation_pipeline(N=config.AMOUNT_OF_INDIVIDUAL_SERIES)
 
         print("Triggering corruption of synthetic dataset")
         demo_corruption_pipeline()

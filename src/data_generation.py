@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import config
 
+from tqdm import tqdm
+
 def trend(time, slope=0):
     return slope * time
 
@@ -56,7 +58,7 @@ def create_individual_time_series(time,
     return baseline + daily + weekly + holiday + linear_trend + noise_term
 
 
-def create_multiple_time_series(n=config.AMOUNT_OF_INDIVIDUAL_SERIES, 
+def create_multiple_time_series(N=config.AMOUNT_OF_INDIVIDUAL_SERIES, 
                                 time=None, 
                                 seed=config.RANDOM_SEED):
     '''Creates an array of multiple time series with the provided profiles from the config file.'''
@@ -68,7 +70,7 @@ def create_multiple_time_series(n=config.AMOUNT_OF_INDIVIDUAL_SERIES,
     
     profile_names = list(config.SYN_SERIES_PROFILES.keys())
     
-    for i in range(n):
+    for i in tqdm(range(N), desc=f"Creating {N} synthetic time series"):
         profile_type = profile_names[i % len(profile_names)]
         params = config.SYN_SERIES_PROFILES[profile_type]
         subjects.append(create_individual_time_series(time, seed=seed + i, **params))

@@ -48,11 +48,24 @@ def run_restoration_methods(dataframe: pd.DataFrame, series_id=0):
         print(f"Interpolation with {method_name}: Started: Started for Series #{series_id}")
         df = dataframe.copy()
         # because of numerical instability of polynomial interpolation for methods such as 
-        # "barycentric", "polynomial" and "krogh"
-        try:
-            repaired_df = interpolate_dataset(df, method=method_name)
-        except ValueError as e:
-            print(f"[Warning] Skipping interpolation with {method_name} for Series #{series_id} due to error: {e}")
+        # "barycentric", "polynomial" and "krogh". The algorithm will try 3 times to build 
+        # a restored dataset
+        MAX_RETRIES = 3
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                repaired_df = interpolate_dataset(df, method=method_name)
+                break  
+            except ValueError as e:
+                print(f"[Warning] Attempt {attempt}/{MAX_RETRIES} failed for method '{method_name}' on Series #{series_id}: {e}")
+                if attempt == MAX_RETRIES:
+                    print(f"[Skip] Interpolation failed permanently for '{method_name}' on Series #{series_id}")
+                    repaired_df = None
+                    break
+                else:
+                    continue
+
+        # restoration failed, so it will stop the restoration for that file
+        if repaired_df is None:
             continue
 
         time_difference = time.time() - start
