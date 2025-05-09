@@ -38,9 +38,14 @@ def export_distance_matrix(np_matrix,
     output_dir = config.TO_DISTANCES_DIR
     
     if normalized:
-        filename = f"{filename}_normalized_{method}_{date}"
+        filename = f"{filename}_normalized_{method}"
     else:
-        filename = f"{filename}_raw_{method}_{date}"
+        filename = f"{filename}_raw_{method}"
+
+    if method == "fastDTW":
+        filename += f"_r{config.FASTDTW_RADIUS}"
+    
+    filename += f"_{date}"
     
     filepath = os.path.join(output_dir, filename)
     np.save(filepath, np_matrix)

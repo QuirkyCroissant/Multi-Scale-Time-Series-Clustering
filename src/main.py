@@ -160,13 +160,18 @@ def run_prototype(generate_data,
                     )
                 del time_series_dict, aggregated_df
 
-    if cluster_methodology in config.CLUSTERING_METHODS:
+    if compute_dist and cluster_methodology is None:
+        print("Only computing distance matrix, no clustering requested.")
+        start_clustering_pipeline(compute_dist=True, normalize=normalize, stop_clustering=True)
+
+    elif cluster_methodology in config.CLUSTERING_METHODS:
         print("Triggering Clustering Pipeline")
-        clustering_pipeline(comp_dist=compute_dist, normalize=normalize)
+        clustering_pipeline(compute_dist=compute_dist, normalize=normalize)
     elif cluster_methodology in config.GRAPH_CLUSTERING_METHODS:
         print("Triggering Graph Analysis Pipeline")
-        graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD ,comp_dist=compute_dist)
-
+        graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD ,compute_dist=compute_dist)
+    else:
+        print("No clustering method provided")
     
 
 def run_final():
