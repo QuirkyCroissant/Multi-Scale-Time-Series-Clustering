@@ -5,11 +5,57 @@ start_time=$(date +%s)
 
 echo "=== STEP 2: Compute Distance Matrices ==="
 
-python3 src/main.py demo \
-    --distance \
-    --dist_method fastDTW \
-    --dist_radius 3 \
-    --gen_amount 100
+N_TIMESERIES=10
+METHODS=("dtw" "fastDTW" "pearson")
+
+for METHOD in "${METHODS[@]}"; do
+    echo "--- Computing distances using method: $METHOD ---"
+    
+    # Pearson: only without normalization
+    if [[ "$METHOD" == "pearson" ]]; then    
+        python3 src/main.py demo \
+            --distance \
+            --dist_method "$METHOD" \
+            --restore_method spline \
+            --gen_amount $N_TIMESERIES
+
+    # fastDTW: using radius 3 is standard        
+    elif [[ "$METHOD" == "fastDTW" ]]; then
+        python3 src/main.py demo \
+            --distance \
+            --dist_method "$METHOD" \
+            --dist_radius 3 \
+            --restore_method spline \
+            --gen_amount $N_TIMESERIES
+
+        python3 src/main.py demo \
+            --distance \
+            --dist_method "$METHOD" \
+            --dist_radius 3 \
+            --restore_method spline \
+            --normalized \
+            --gen_amount $N_TIMESERIES
+
+    else
+        # both raw and normalized runs
+        python3 src/main.py demo \
+            --distance \
+            --dist_method "$METHOD" \
+            --restore_method spline \
+            --gen_amount $N_TIMESERIES
+
+        python3 src/main.py demo \
+            --distance \
+            --dist_method "$METHOD" \
+            --restore_method spline \
+            --normalized \
+            --gen_amount $N_TIMESERIES
+    fi
+
+    python3 -c "import gc; gc.collect()"
+    echo "--- Done with method: $METHOD ---"
+    sleep 5
+done
 
 echo "=== Step 2 completed: Distance matrices computed and saved. ==="
 
@@ -17,7 +63,7 @@ end_time=$(date +%s)
 runtime=$((end_time - start_time))
 
 hours=$((runtime / 3600))
-minutes=$(( (runtime % 3600) / 60 ))
+minutes=$(((runtime % 3600) / 60))
 seconds=$((runtime % 60))
 
 if (( hours > 0 )); then

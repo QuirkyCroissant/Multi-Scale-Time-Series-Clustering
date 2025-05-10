@@ -5,13 +5,15 @@ start_time=$(date +%s)
 
 echo "=== STEP 1: Generate, Corrupt, and Restore Time Series Data ==="
 
-echo "=== STEP 1.1: Generate Time Series Data"
+echo "=== Generate Time Series Data"
+
+N_TIMESERIES=10
 
 python3 src/main.py demo \
     --new_data \
     --comp_img \
     --restore \
-    --gen_amount 100
+    --gen_amount $N_TIMESERIES
 
 echo "=== Step 1 completed: All data generated, corrupted, and restored. ==="
 

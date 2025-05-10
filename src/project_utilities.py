@@ -32,15 +32,16 @@ def import_restored_data_as_numpy(input_dir):
 def export_distance_matrix(np_matrix, 
                            filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                            method=config.DEFAULT_DISSIMILARITY,
-                           normalized=False):
+                           normalized=False,
+                           aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     output_dir = config.TO_DISTANCES_DIR
     
     if normalized:
-        filename = f"{filename}_normalized_{method}"
+        filename = f"{filename}_{aggregation_method}_normalized_{method}"
     else:
-        filename = f"{filename}_raw_{method}"
+        filename = f"{filename}_{aggregation_method}_raw_{method}"
 
     if method == "fastDTW":
         filename += f"_r{config.FASTDTW_RADIUS}"
@@ -52,20 +53,24 @@ def export_distance_matrix(np_matrix,
     print(f"Distance matrix saved to: {filepath}")
         
         
-def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
-                           is_normalize=False,
+def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
                            method=config.DEFAULT_DISSIMILARITY,
+                           is_normalize=False,
+                           aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                            date=None):
     '''Imports a distance matrix from the respective experiments folder and depending
     on if a specific date has not been passed it will retrieve the newest file or a
     specific one.'''
     
+    radius_suffix = f"_r{config.FASTDTW_RADIUS}" if method == "fastDTW" else ""
+
     if date is None:
     
         if is_normalize:
-            filename_without_date = f"{filename}_normalized_{method}_"
+            filename_without_date = f"{filename}_{aggregation_method}_normalized_{method}{radius_suffix}_"
         else:
-            filename_without_date = f"{filename}_raw_{method}_"
+            filename_without_date = f"{filename}_{aggregation_method}_raw_{method}{radius_suffix}_"
+
 
         dir_path = config.TO_DISTANCES_DIR
         
@@ -89,9 +94,10 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
 
     else:
         if is_normalize:
-            filename_with_date = f"{filename}_normalized_{method}_{date}.npy"
+            filename_with_date = f"{filename}_{aggregation_method}_normalized_{method}{radius_suffix}_{date}.npy"
         else:
-            filename_with_date = f"{filename}_raw_{method}_{date}.npy"
+            filename_with_date = f"{filename}_{aggregation_method}_raw_{method}{radius_suffix}_{date}.npy"
+
 
         filepath = os.path.join(config.TO_DISTANCES_DIR, 
                                 filename_with_date)

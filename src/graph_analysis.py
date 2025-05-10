@@ -18,6 +18,7 @@ from project_utilities import (export_clustering_log, import_restored_data_as_nu
 
 def transform_series_into_network(series_matrix: np.ndarray, 
                                   compute_dist=True,
+                                  aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                                   threshold: float = None,
                                   ):
     
@@ -49,6 +50,7 @@ def transform_series_into_network(series_matrix: np.ndarray,
         pearson_dissim_matrix = import_distance_matrix(
             filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
             method=config.DEFAULT_GRAPH_DISSIMILARITY,
+            aggregation_method=aggregation_method,
             date=None)
     
     for i in range(N):
@@ -144,6 +146,7 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
     
     series_network = transform_series_into_network(series_matrix=series_matrix, 
                                                    compute_dist=compute_dist, 
+                                                   aggregation_method=aggregation_method,
                                                    threshold=config.GRAPH_THRESHOLD)
     
     
@@ -159,7 +162,7 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
     plot_graph_clustering_results(series_network, 
                                   series_matrix, 
                                   graph_cluster_labels,
-                                  config.DEFAULT_GRAPH_CLUSTERING_METHOD
+                                  clustering_method
                                   )
     k = len(np.unique(graph_cluster_labels))
     log = prepare_graph_clustering_log(clustering_method=clustering_method,

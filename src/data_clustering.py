@@ -96,7 +96,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
     best_silhoutte_score = 0
     
     if cluster_method == "kmedoids":
-        if k is None:
+        if k is None or config.OPTIMIZE_CLUSTER_K:
             print("No k provided. Optimizing k using silhoutte score...")
             silhoutte_scores = []
             max_allowed_k = min(max_k, distance_matrix.shape[0] - 1)
@@ -136,7 +136,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
         
         export_clustering_log(log)
 
-        return cluster_labels, model
+        return cluster_labels, model, k
     
     elif cluster_method == "hierarchical":
         
@@ -176,7 +176,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
         
         export_clustering_log(log)
 
-        return cluster_labels, model
+        return cluster_labels, model, k
         
     else:
         raise ValueError(f"Unsupported clustering method. {cluster_method}")
@@ -219,7 +219,8 @@ def start_clustering_pipeline(compute_dist=False,
         
         export_distance_matrix(distance_matrix, 
                                method=config.DEFAULT_DISSIMILARITY,
-                               normalized=normalize
+                               normalized=normalize,
+                               aggregation_method=aggregation_method
                                )
 
 
@@ -228,15 +229,16 @@ def start_clustering_pipeline(compute_dist=False,
             print("Clustering process preemptively aborted. Only Distance calculated")
             return
     
-    
-    labels, model = initiate_clustering_computation(
+
+    labels, model, k = initiate_clustering_computation(
         import_distance_matrix(
             filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
             method=config.DEFAULT_DISSIMILARITY,
-            date=None,
-            is_normalize=normalize),
+            is_normalize=normalize,
+            aggregation_method=aggregation_method,
+            date=None),
             cluster_method=config.DEFAULT_CLUSTERING_METHOD,
-            k=config.DEFAULT_AMOUNT_OF_CLUSTERS,
+            k=config.DEFAULT_AMOUNT_OF_CLUSTERS if not config.OPTIMIZE_CLUSTER_K else None,
             is_normalized=normalize
     )
 
@@ -262,12 +264,13 @@ def start_clustering_pipeline(compute_dist=False,
                             labels,
                             normalize,
                             method="average",
-                            k=config.DEFAULT_AMOUNT_OF_CLUSTERS,
+                            k=k,
                             dissimilarity_matrix=import_distance_matrix(
                                                     filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                                                     method=config.DEFAULT_DISSIMILARITY,
-                                                    date=None,
-                                                    is_normalize=normalize
+                                                    is_normalize=normalize,
+                                                    aggregation_method=aggregation_method,
+                                                    date=None
                                                     )
         )
     else:

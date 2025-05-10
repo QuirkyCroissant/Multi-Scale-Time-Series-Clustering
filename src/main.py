@@ -69,20 +69,26 @@ def aggregation_pipeline(is_demo_execution, activate_restoration=False):
         restore_time_series_data(is_demo_execution)
     
 
-def clustering_pipeline(comp_dist=False, normalize=False):
+def clustering_pipeline(compute_dist=False, normalize=False, stop_clustering=False,
+                        restore_data_input=config.DEFAULT_INTERPOLATION_METHOD):
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
     matrix is used for the subsequent clustering. Returns which aggregation method was used,
     on which clustering was used.'''
-    start_clustering_pipeline(comp_dist, normalize)
+    start_clustering_pipeline(compute_dist, normalize, stop_clustering=stop_clustering, 
+                              aggregation_method=restore_data_input)
     
 def graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
-                              comp_dist=False):
-    initiate_graph_analysis(aggregation_method=aggregation_method, compute_dist=comp_dist)
+                              clustering_method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
+                              compute_dist=False):
+    initiate_graph_analysis(aggregation_method=aggregation_method, 
+                            clustering_method=clustering_method,
+                            compute_dist=compute_dist)
     
 
 def run_prototype(generate_data, 
                   restore=False, 
+                  restore_method=config.DEFAULT_INTERPOLATION_METHOD,
                   compute_dist=False,
                   normalize=False,
                   plot=False,
@@ -162,14 +168,20 @@ def run_prototype(generate_data,
 
     if compute_dist and cluster_methodology is None:
         print("Only computing distance matrix, no clustering requested.")
-        start_clustering_pipeline(compute_dist=True, normalize=normalize, stop_clustering=True)
+        clustering_pipeline(compute_dist=True, 
+                            normalize=normalize, 
+                            stop_clustering=True,
+                            restore_data_input=restore_method)
 
     elif cluster_methodology in config.CLUSTERING_METHODS:
         print("Triggering Clustering Pipeline")
-        clustering_pipeline(compute_dist=compute_dist, normalize=normalize)
+        clustering_pipeline(compute_dist=compute_dist, normalize=normalize,
+                            restore_data_input=restore_method)
     elif cluster_methodology in config.GRAPH_CLUSTERING_METHODS:
         print("Triggering Graph Analysis Pipeline")
-        graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD ,compute_dist=compute_dist)
+        graph_clustering_pipeline(aggregation_method=restore_method, 
+                                  clustering_method=cluster_methodology,
+                                  compute_dist=compute_dist)
     else:
         print("No clustering method provided")
     
@@ -204,8 +216,9 @@ def override_config_with_args(args):
 
     if getattr(args, "cluster_method", None) is not None:
         config.DEFAULT_CLUSTERING_METHOD = args.cluster_method
-    if getattr(args, "cluster_k", None) is not None:
-        config.DEFAULT_AMOUNT_OF_CLUSTERS = args.cluster_k
+    if args.cluster_k is not None:
+        config.DEFAULT_AMOUNT_OF_CLUSTERS = args.cluster_k if args.cluster_k > 0 else None
+    config.OPTIMIZE_CLUSTER_K = args.optimize_k
 
 
 def main():
@@ -225,6 +238,7 @@ def main():
     global_parser.add_argument("--dist_radius", type=int, help="Override radius used for fastDTW")
     global_parser.add_argument("--cluster_method", type=str, choices=config.CLUSTERING_METHODS + config.GRAPH_CLUSTERING_METHODS, help="Override clustering method")
     global_parser.add_argument("--cluster_k", type=int, help="Override k amount for clustering")
+    global_parser.add_argument("--optimize_k", action="store_true", help="Optimize the number of clusters based on silhouette score (only applies to kmedoids or hierarchical)")
 
     subparsers = parser.add_subparsers(dest="mode", required=True)
 
@@ -275,7 +289,7 @@ def main():
     # ----------------
     # Eval Mode
     # ----------------
-    parser_eval = subparsers.add_parser("eval", help="Analyze prior results and clustering logs")
+    parser_eval = subparsers.add_parser("eval", parents=[global_parser], help="Analyze prior results and clustering logs")
     eval_subparsers = parser_eval.add_subparsers(dest="eval_mode", required=True)
 
     # Restoration Demo Eval
@@ -326,19 +340,20 @@ def main():
         parser.error("--dist_radius can only be used if --dist_method is 'fastDTW'")
     
     if args.cluster_k is not None:
-        if args.cluster_method is None or args.cluster_method not in ['kmedoids', "hierachical"]:
-            parser.error("--cluster_k can only be used if --cluster_method is 'kmedoids' or 'hierachical'")
+        if args.cluster_method is None or args.cluster_method not in ['kmedoids', "hierarchical"]:
+            parser.error("--cluster_k can only be used if --cluster_method is 'kmedoids' or 'hierarchical'")
 
     override_config_with_args(args)
-
+    
     if args.mode == "demo":
         run_prototype(
             generate_data=args.new_data, 
             restore=args.restore,
+            restore_method=args.restore_method,
             compute_dist=args.distance,
             normalize=args.normalized,
             plot=args.comp_img,
-            cluster_methodology=args.cluster_method 
+            cluster_methodology=args.cluster_method
         )
     elif args.mode == "prod":
         run_final()
