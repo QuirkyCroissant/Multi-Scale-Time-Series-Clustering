@@ -5,6 +5,7 @@ import re
 import json
 from collections import defaultdict
 from datetime import datetime
+from sklearn.metrics import adjusted_rand_score, rand_score, normalized_mutual_info_score
 
 import config
 from project_utilities import export_dataframe_to_csv
@@ -118,23 +119,138 @@ def evaluate_restoration_results(metrics):
                             eval=True)
 
     print("Evaluation of Interpolation results concluded.")
+
+def parse_filename_to_metadata(filename):
+    base = filename.replace(".json", "")
+
+    timestamp_match = re.search(r"_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$", base)
+    if not timestamp_match:
+        raise ValueError(f"Invalid log file format(timestamp): {base}")
+    
+    timestamp = timestamp_match.group(1)
+
+    parts = base.split("_")
+
+    try:
+        method = parts[1]
+        distance = parts[2]
+    except IndexError:
+        raise ValueError(f"Invalid log file format, missing parts(method/distance): {base}")
+    
+
+    radius = None
+    if "fastDTW" in distance:
+        radius_match = re.search(r"r(\d+)", base)
+        radius = int(radius_match.group(1)) if radius_match else None
+    
+    normalized = "_n_" in base
+
+    
+    return {
+        "method": method,
+        "distance": distance,
+        "radius": radius,
+        "normalized": normalized,
+        "timestamp": timestamp
+    }
+
+
+def import_latest_clustering_logs(log_dir):
+    '''Collects most recent log files of either the default or the graph log directory
+    and returns it in a 2D dictionary, for further processing'''
+    
+    latest_logs = {}
+    for fname in os.listdir(log_dir):
+        if not fname.endswith(".json"):
+            continue
+        try:
+            metadata = parse_filename_to_metadata(fname)
+            key = f"{metadata['method']}_{metadata['distance']}_{'n' if metadata['normalized'] else 'raw'}"
+            curr_timeseries = metadata["timestamp"]
             
+            if key not in latest_logs or curr_timeseries > latest_logs[key]["metadata"]["timestamp"]:
+                with open(os.path.join(log_dir, fname), 'r') as f:
+                    log = json.load(f)
+                metadata["timestamp"] = curr_timeseries
+                latest_logs[key] = {
+                    "log": log,
+                    "metadata": metadata,
+                    "filename": fname
+                }
+        except Exception as e:
+            print(f"Could not parse {fname}: {e}")
+
+    return latest_logs
+
+            
+def compute_similarity_of_clustering_methodologies(traditional_results, graph_results):
+    '''Collects default and graph results, computes external metrics and combines the 
+    newfound information into a table, which gets returned in the end'''
+    results = []
+    
+
+    for default_key, default_entry in traditional_results.items():
+        base_log = default_entry["log"]
+        
+        base_labels = base_log["labels"]
+        base_k = base_log["nClusters"]
+        base_qty = base_log["dataQuantity"]
+        
+        for graph_key, graph_entry in graph_results.items():
+            
+            graph_log = graph_entry["log"]
+            
+            if graph_log["dataQuantity"] != base_qty:
+                continue
+            
+            table_row = {
+                "Graph_Clustering": graph_log["clusteringMethod"],
+                "Graph_Dissimilarity": graph_log["distanceMeasure"],
+                "Baseline_Method": base_log["clusteringMethod"],
+                "Baseline_Dissimilarity": base_log["distanceMeasure"],
+                "Normalized": default_entry["metadata"]["normalized"],
+                "k": base_k,
+                "ARI": adjusted_rand_score(base_labels, graph_log["labels"]),
+                "RAND": rand_score(base_labels, graph_log["labels"]),
+                "NMI": normalized_mutual_info_score(base_labels, graph_log["labels"])
+            }
+
+            results.append(table_row)
+
+    return pd.DataFrame(results)
 
 
+def evaluate_clustering_results(metrics):
+    '''Starts the evaluation process for the clustering part of the project. Triggers and forwards all
+    relevant parts to process the corresponding log files and aggregate them to a join table, which gets
+    exported in the end.'''
+
+    traditional_results = import_latest_clustering_logs(config.TO_DEFAULT_CLUSTERING_LOGS_DIR)
+    graph_results = import_latest_clustering_logs(config.TO_GRAPH_CLUSTERING_LOGS_DIR)
+    
+    df_clustering_comparison = compute_similarity_of_clustering_methodologies(traditional_results, graph_results)
+    print(df_clustering_comparison)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    export_dataframe_to_csv(df=df_clustering_comparison, 
+                            filename=f"{config.CLUSTERING_RAW_TABLE_EXPORT_NAME}_{timestamp}", 
+                            output_dir=config.TO_EVAL_CLUSTERING_DIR,
+                            eval=True)
 
     
 
 
 def initialise_specific_evaluation(mode: str, metrics=[]):
-    '''TODO: Clustering DEMO and Prod
-    Initiates evaluation mode for either the interpolation or clustering, based on passed program arguments'''
+    '''Initiates evaluation mode for either the interpolation or clustering, based on passed program arguments'''
     if mode == "aggregation":
         check_metrics(mode, metrics)
         evaluate_restoration_results(metrics)
         
     elif mode == "clustering_demo":
         check_metrics(mode, metrics)
-        pass
+        evaluate_clustering_results(metrics)
+
     elif mode == "clustering_prod":
         check_metrics(mode, metrics)
         pass

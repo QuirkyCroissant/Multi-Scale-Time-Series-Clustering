@@ -196,8 +196,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
     # EVALUATION (Analyse restoration and clustering metrics)
     python src/main.py eval aggregation --metrics MSE MAPE
-    python src/main.py eval clusteringDemo --metrics ARI RAND NMI
-    python src/main.py eval clusteringProd --metrics Silhouette Modularity
+    python src/main.py eval clustering_demo --metrics ARI RAND NMI
+    python src/main.py eval clustering_prod --metrics Silhouette Modularity
     ```
 
     **Global Overrides (optional in demo/prod mode)**

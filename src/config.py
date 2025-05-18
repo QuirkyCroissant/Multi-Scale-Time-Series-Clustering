@@ -145,5 +145,6 @@ CLUSTERING_INTERNAL_METRICS = ['silhouette', 'modularity']
 
 RESTORATION_RAW_TABLE_EXPORT_NAME = "aggregation_raw_metric_table"
 RESTORATION_PRETTY_TABLE_EXPORT_NAME = "aggregation_pretty_metric_table"
+CLUSTERING_RAW_TABLE_EXPORT_NAME = "clustering_external_metric_result_table"
 
 
