@@ -7,7 +7,7 @@ echo "=== STEP 1: Generate, Corrupt, and Restore Time Series Data ==="
 
 echo "=== Generate Time Series Data"
 
-N_TIMESERIES=10
+N_TIMESERIES=100
 
 python3 src/main.py demo \
     --new_data \

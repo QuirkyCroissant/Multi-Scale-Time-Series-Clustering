@@ -95,7 +95,7 @@ DAILY_CORRUPTION_RATE = 0.15
 
 #### restoration parameters
 
-DEFAULT_INTERPOLATION_METHOD = "linear"
+DEFAULT_INTERPOLATION_METHOD = "spline"
 INTERPOLATION_METHODS = [
     "linear", "time", "index", 
     "values", "pad", "nearest", 

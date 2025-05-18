@@ -345,15 +345,19 @@ def main():
 
     override_config_with_args(args)
     
+    # fallback defaults to args
+    restore_method = args.restore_method or config.DEFAULT_INTERPOLATION_METHOD
+    cluster_method = args.cluster_method or config.DEFAULT_CLUSTERING_METHOD
+
     if args.mode == "demo":
         run_prototype(
             generate_data=args.new_data, 
             restore=args.restore,
-            restore_method=args.restore_method,
+            restore_method=restore_method,
             compute_dist=args.distance,
             normalize=args.normalized,
             plot=args.comp_img,
-            cluster_methodology=args.cluster_method
+            cluster_methodology=cluster_method
         )
     elif args.mode == "prod":
         run_final()

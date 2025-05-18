@@ -5,7 +5,7 @@ start_time=$(date +%s)
 
 echo "=== STEP 2: Compute Distance Matrices ==="
 
-N_TIMESERIES=10
+N_TIMESERIES=100
 METHODS=("dtw" "fastDTW" "pearson")
 
 for METHOD in "${METHODS[@]}"; do

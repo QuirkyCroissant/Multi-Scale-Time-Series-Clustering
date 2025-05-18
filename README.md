@@ -73,12 +73,12 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │      ├── legacy/              # Deprecated distance matrices
 │   ├── logs					# Log files from various experimental operations
 │      ├── clustering
-│            ├── default/              # Stores traditional time series clustering results
-│            ├── graph/                # Stores graph-based clustering results on transformed data
+│            ├── default/             # Stores traditional time series clustering results
+│            ├── graph/               # Stores graph-based clustering results on transformed data
 │      ├── interpolations
 │            ├── <method>/            # Stores interpolation accuracy of demo data
 │            ├── legacy/              # Deprecated log files
-│   ├── plots					# Plot diagrams from various experimental operations
+│   ├── plots					      # Plot diagrams from various experimental operations
 │      ├── clustering/
 │            ├── legacy/              # Deprecated plot diagrams
 │            ├── ...
@@ -92,6 +92,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 |            ├── ...
 │      ├── legacy/
 ├│ notebooks/					# Jupyter notebooks for exploratory analysis
+├│ scripts/                     # Directory that holds batch scripts used for automated deployment 
 ├│ src/							# Source code (algorithms, utility functions)
 │   ├── config.py  				# Stores essential parameters and constants
 │   ├── data_corruption.py  	# Module for synthetic dataset corruption
@@ -100,10 +101,58 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │   ├── main.py					# Main script with mode selection
 │   ├── project_utilities.py	# helper utilities for the project
 └│ CHANGELOG.md                	# Documents releases and changes 
-└│ LICENSE                	  # Repo License
+└│ LICENSE                	    # Repo License
 └│ README.md                	# Project overview and instructions
-└│ requirements.txt               # Contain all external dependancies for the project
+└│ requirements.txt             # Contain all external dependancies for the project
 ```
+
+## ⚠️ FastDTW: How to Patch It
+  
+> This project uses [`fastdtw`](https://github.com/slaypni/fastdtw)(Version 0.3.1) with a **minor source patch** to enable proper compilation of its C extension. The published version contains a broken fallback for importing `INFINITY`, which prevents compiling correctly.
+>
+> Without fixing this, FastDTW runs in **pure Python**, and can be **50× slower**!
+
+### Installing the fixed version:
+
+1. Install system build tools (Linux/WSL only):
+   ```bash
+   sudo apt update
+   sudo apt install build-essential python3-dev
+   ```
+
+   These are required for building C extensions like FastDTW in this case.
+
+2. Clone the repo:
+   ```bash
+   git clone https://github.com/slaypni/fastdtw.git
+   cd fastdtw
+   ```
+
+3. Edit the file `fastdtw/_fastdtw.pyx`:  
+   Replace this:
+   ```cython
+   try:
+       from libc.math cimport INFINITY
+   except:
+       from numpy.math cimport INFINITY
+   ```
+   With:
+   ```cython
+   from libc.math cimport INFINITY
+   ```
+
+4. Build and install:
+   ```bash
+   python setup.py build_ext --inplace
+   pip install .
+   ```
+
+5. Confirm the compiled extension is used:
+   ```python
+   import fastdtw._fastdtw
+   print(fastdtw._fastdtw.__file__)
+   ```
+   You should see a `.so` or `.pyd` file path.
 
 
 ## Installation/Usage
@@ -128,7 +177,13 @@ This repository contains code and documentation for my bachelor thesis on cluste
 	pip install -r requirements.txt
 	```
 
-4. **Run the project:**
+4. **Fixing fastDTW**
+    
+    See the following disclaimer above the installation guide, to resolve the issue of fastDTW running in pure Python.
+
+
+
+5. **Run the project:**
 
     You can now run the project in 3 main modes, specified by the following CLI arguments:
     

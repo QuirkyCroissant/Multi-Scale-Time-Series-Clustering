@@ -11,7 +11,7 @@ NORMALIZED=("false" "true")
 K_OPTIONS=(0 4)
 
 RESTORE_METHOD="spline"
-N_TIMESERIES=10
+N_TIMESERIES=100
 
 for METHOD in "${METHODS[@]}"; do
     for NORM in "${NORMALIZED[@]}"; do
