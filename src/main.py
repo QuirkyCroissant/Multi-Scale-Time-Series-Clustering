@@ -5,6 +5,7 @@ from data_corruption import corrupt_time_series_data
 from data_restoration import restore_time_series_data
 from data_clustering import start_clustering_pipeline
 from graph_analysis import initiate_graph_analysis
+from prod_preprocessing import preprocess_prod_data_to_series
 from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
                                deindex_dataframe, plot_time_series_comparison, traverse_to_method_dir)
@@ -190,7 +191,7 @@ def run_final():
     '''TODO: production ready implementation which will be 
        implemented after an sufficient prototyp'''
     print("Running Application in Production mode:")
-    pass
+    preprocess_prod_data_to_series()
 
 
 

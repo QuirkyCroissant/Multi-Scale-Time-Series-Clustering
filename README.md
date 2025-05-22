@@ -62,6 +62,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
 │      ├── ts_demo_data_<#>_clean
 │      ├── ...
 │   ├── legacy/  				# Holds deprecated prototype data
+│   ├── production_input/  				# holds provided one or more prod / real world dataset(s)
+│      ├── extracted_series/    # holds extracted time series from provided prod dataset(s)
 │   ├── restored/  				# Restored data by multiple means(e.g.: interpolation)
 │      ├── <method>/            # Restored data through interpolation method
 │            ├── ts_demo_data_<#>_<method> 

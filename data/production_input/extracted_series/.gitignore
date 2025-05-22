@@ -1,0 +1,6 @@
+# Ignore all series data
+*
+
+# not gitignore and local readme
+!.gitignore
+!README.md

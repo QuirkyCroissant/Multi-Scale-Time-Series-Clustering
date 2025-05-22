@@ -262,7 +262,8 @@ def export_dataframe_to_csv(df,
                             output_dir=None,
                             clean=False,
                             corrupted=False,
-                            eval=False):
+                            eval=False,
+                            prod=False):
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     if output_dir is None:
@@ -279,6 +280,9 @@ def export_dataframe_to_csv(df,
         filename = f"{filename}_corrupted"
     
     if eval:
+        filename = f"{filename}"
+    
+    if prod:
         filename = f"{filename}"
 
     filepath = os.path.join(output_dir, filename)

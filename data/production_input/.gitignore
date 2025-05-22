@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# but not gitignore itself, local readme file and subdirectories
+!.gitignore
+!README.md
+!*/

@@ -62,6 +62,10 @@ TO_CLEAN_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "generated")
 TO_CORRUPTED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "corrupted")
 TO_AGGREGATED_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "restored")
 
+TO_PROD_INPUT_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "production_input")
+TO_PROD_SERIES_EXPORT_DATA_DIR = os.path.join(SCRIPT_DIR, "..", "data", "production_input", "extracted_series")
+
+
 TO_DISTANCES_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "distance_matrices")
 TO_INTERPOLATION_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "interpolations")
 TO_CLUSTERING_LOGS_DIR = os.path.join(SCRIPT_DIR, "..", "experiments", "logs", "clustering")
@@ -148,3 +152,9 @@ RESTORATION_PRETTY_TABLE_EXPORT_NAME = "aggregation_pretty_metric_table"
 CLUSTERING_RAW_TABLE_EXPORT_NAME = "clustering_external_metric_result_table"
 
 
+### PRODUCTION parameters
+
+IS_PROD = False
+PROD_DATA_DELIMITER = ";"
+PROD_INPUT_TIMESTAMP_FORMAT = "%d.%m.%Y"
+PROD_EXPORT_DATA_NAME = "ts_prod_data"

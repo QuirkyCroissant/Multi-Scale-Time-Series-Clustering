@@ -27,6 +27,15 @@ else
     echo "Skipped log file deletion."
 fi
 
+read -p "Do you also want to delete extracted production series files? (y/N): " delete_prod_series
+if [[ "$delete_prod_series" =~ ^[Yy]$ ]]; then
+    echo "Deleting extracted production time series..."
+    find data/production_input/extracted_series/ -type f -name 'ts_prod_data_*_raw' -exec echo "Deleting: {}" \; -exec rm -f {} +
+    echo "Extracted production series removed."
+else
+    echo "Skipped deletion of extracted production series."
+fi
+
 read -p "Do you also want to delete distance matrix files? (y/N): " delete_dist
 if [[ "$delete_dist" =~ ^[Yy]$ ]]; then
     echo "Deleting distance matrices..."
