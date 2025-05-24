@@ -41,9 +41,16 @@ def interpolate_dataset(dataframe: pd.DataFrame, freq='D', method='linear', spli
     return df_repaired
 
 
-def run_restoration_methods(dataframe: pd.DataFrame, series_id=0, mode="demo"):
+def run_restoration_methods(dataframe: pd.DataFrame, series_id=0, 
+                            restore_method="all", 
+                            mode="demo"):
     '''triggers multiple interpolation methods and saves accuracy results'''
-    for method_name in config.INTERPOLATION_METHODS:
+    if restore_method == "all":
+        chosen_methods = config.INTERPOLATION_METHODS
+    else:
+        chosen_methods = [restore_method]
+
+    for method_name in chosen_methods:
         start = time.time()
         print(f"Interpolation with {method_name}: Started: Started for Series #{series_id}")
         df = dataframe.copy()
@@ -89,7 +96,7 @@ def run_restoration_methods(dataframe: pd.DataFrame, series_id=0, mode="demo"):
         
 
 
-def restore_time_series_data(is_demo_execution):
+def restore_time_series_data(restore_method, is_demo_execution):
     '''Imports the corrupt dataset and moves it down the restoration stream. In following 
     functions data gets interpolated, up- and downsampled and than saved in the data 
     directory'''
@@ -117,7 +124,7 @@ def restore_time_series_data(is_demo_execution):
             input_dir=unrestored_data_dir
             )
         
-        run_restoration_methods(corrupt_data, series_id=i, mode=mode)
+        run_restoration_methods(corrupt_data, series_id=i, restore_method=restore_method, mode=mode)
         print("\n")
 
     print("Completed restoration of all time series data")

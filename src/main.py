@@ -64,10 +64,10 @@ def demo_corruption_pipeline():
 
     print("All time series have been corrupted and exported.")
 
-def aggregation_pipeline(is_demo_execution, activate_restoration=False):
+def aggregation_pipeline(restore_method, is_demo_execution, activate_restoration=False):
     '''aggregation pipeline'''
     if activate_restoration:
-        restore_time_series_data(is_demo_execution)
+        restore_time_series_data(restore_method, is_demo_execution)
     
 
 def clustering_pipeline(compute_dist=False, normalize=False, stop_clustering=False,
@@ -140,7 +140,7 @@ def run_prototype(generate_data,
             del time_series_dict
     
     print("Triggering Aggregation Pipeline")
-    aggregation_pipeline(is_demo_execution, restore)
+    aggregation_pipeline(restore_method, is_demo_execution, restore)
 
     # plots restored datasets to the original ones, for visual confirmation
     if plot:
@@ -187,7 +187,7 @@ def run_prototype(generate_data,
         print("No clustering method provided")
     
 
-def run_final():
+def run_final(aggregation_method, clustering_method):
     '''TODO: production ready implementation which will be 
        implemented after an sufficient prototyp'''
     print("Running Application in Production mode:")
@@ -196,7 +196,9 @@ def run_final():
     config.AMOUNT_OF_INDIVIDUAL_SERIES = count_extracted_prod_series()
 
     print("Running Restoration Pipeline in Production mode:")
-    aggregation_pipeline(is_demo_execution=False, activate_restoration=True)
+    aggregation_pipeline(aggregation_method, 
+                         is_demo_execution=False, 
+                         activate_restoration=True)
     
 
 
@@ -366,7 +368,7 @@ def main():
             cluster_methodology=cluster_method
         )
     elif args.mode == "prod":
-        run_final()
+        run_final(restore_method, cluster_method)
 
     elif args.mode == "eval":
         
