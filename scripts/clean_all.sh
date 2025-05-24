@@ -12,7 +12,9 @@ echo "Deleting generated and processed data files..."
 
 find data/generated/ -type f -name 'ts_demo_data_*_clean' -exec echo "Deleting: {}" \; -exec rm -f {} +
 find data/corrupted/ -type f -name 'ts_demo_data_*_corrupted' -exec echo "Deleting: {}" \; -exec rm -f {} +
-find data/restored/ -mindepth 2 -type f ! -path "*/legacy/*" -exec echo "Deleting: {}" \; -exec rm -f {} +
+find data/restored/ -mindepth 2 -type f ! -path "*/legacy/*" \
+    ! -name '.gitignore' ! -name 'README.md' \
+    -exec echo "Deleting: {}" \; -exec rm -f {} +
 
 echo "Data files removed."
 

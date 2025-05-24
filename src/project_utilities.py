@@ -14,6 +14,11 @@ import os
 import re
 import json
 
+def count_extracted_prod_series():
+    return len([
+        f for f in os.listdir(config.TO_PROD_SERIES_EXPORT_DATA_DIR) 
+        if f.startswith(config.PROD_EXPORT_DATA_NAME) and f.endswith("_raw")
+    ])
 
 def import_restored_data_as_numpy(input_dir):
     '''Imports the aggregated data from a given interpolated 

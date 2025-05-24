@@ -6,7 +6,7 @@ from data_restoration import restore_time_series_data
 from data_clustering import start_clustering_pipeline
 from graph_analysis import initiate_graph_analysis
 from prod_preprocessing import preprocess_prod_data_to_series
-from project_utilities import ( plot_time_series, export_dataframe_to_csv, 
+from project_utilities import (count_extracted_prod_series, plot_time_series, export_dataframe_to_csv, 
                                import_dataframe_from_csv, import_dataframe_from_csv_indexed,
                                deindex_dataframe, plot_time_series_comparison, traverse_to_method_dir)
 import config
@@ -193,6 +193,11 @@ def run_final():
     print("Running Application in Production mode:")
     preprocess_prod_data_to_series()
 
+    config.AMOUNT_OF_INDIVIDUAL_SERIES = count_extracted_prod_series()
+
+    print("Running Restoration Pipeline in Production mode:")
+    aggregation_pipeline(is_demo_execution=False, activate_restoration=True)
+    
 
 
 def run_evaluation(mode: str, metrics=[]):

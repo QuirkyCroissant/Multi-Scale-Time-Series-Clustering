@@ -41,7 +41,7 @@ def interpolate_dataset(dataframe: pd.DataFrame, freq='D', method='linear', spli
     return df_repaired
 
 
-def run_restoration_methods(dataframe: pd.DataFrame, series_id=0):
+def run_restoration_methods(dataframe: pd.DataFrame, series_id=0, mode="demo"):
     '''triggers multiple interpolation methods and saves accuracy results'''
     for method_name in config.INTERPOLATION_METHODS:
         start = time.time()
@@ -70,11 +70,20 @@ def run_restoration_methods(dataframe: pd.DataFrame, series_id=0):
 
         time_difference = time.time() - start
         
-        compute_and_save_accuracy(repaired_df, method_name, series_id, time_difference)
+        if mode == "demo":
+            compute_and_save_accuracy(repaired_df, method_name, series_id, time_difference)
+
+        output_dir = os.path.join(config.TO_AGGREGATED_DATA_DIR, method_name)
+        base_filename = config.SYN_EXPORT_DATA_NAME
+        
+        if mode == "prod":
+            output_dir = os.path.join(output_dir, "prod")
+            base_filename = config.PROD_EXPORT_DATA_NAME
+
 
         export_dataframe_to_csv(repaired_df, 
-                                filename=f"{config.SYN_EXPORT_DATA_NAME}_{series_id}_{method_name}", 
-                                output_dir=os.path.join(config.TO_AGGREGATED_DATA_DIR, method_name))
+                                filename=f"{base_filename}_{series_id}_{method_name}", 
+                                output_dir=output_dir)
         
 
         
@@ -86,9 +95,17 @@ def restore_time_series_data(is_demo_execution):
     directory'''
 
     if is_demo_execution:
-        corrupt_origin_dir = config.TO_CORRUPTED_DATA_DIR
+        unrestored_data_dir = config.TO_CORRUPTED_DATA_DIR
+        base_filename = config.SYN_EXPORT_DATA_NAME
+        unrestored_suffix = "corrupted"
+        mode = "demo"
+
     else:
-        raise NotImplementedError("aggregation pipeline for production mode not implemented yet.")
+        unrestored_data_dir = config.TO_PROD_SERIES_EXPORT_DATA_DIR
+        base_filename = config.PROD_EXPORT_DATA_NAME
+        amount = config.AMOUNT_OF_INDIVIDUAL_SERIES
+        unrestored_suffix = "raw"
+        mode = "prod"
 
 
     for i in range(config.AMOUNT_OF_INDIVIDUAL_SERIES):
@@ -96,11 +113,11 @@ def restore_time_series_data(is_demo_execution):
         print(f"\nRestoring time series #{i}...")
 
         corrupt_data: pd.DataFrame = import_dataframe_from_csv_indexed(
-            f"{config.SYN_EXPORT_DATA_NAME}_{i}_corrupted",
-            input_dir=corrupt_origin_dir
+            f"{base_filename}_{i}_{unrestored_suffix}",
+            input_dir=unrestored_data_dir
             )
         
-        run_restoration_methods(corrupt_data, series_id=i)
+        run_restoration_methods(corrupt_data, series_id=i, mode=mode)
         print("\n")
 
     print("Completed restoration of all time series data")
