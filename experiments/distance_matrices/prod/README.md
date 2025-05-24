@@ -1,0 +1,1 @@
+This folder might store pairwise (dis-)similarity matrices generated from production datasets. For privacy and storage reasons, it is excluded from version control.

@@ -13,13 +13,15 @@ from project_utilities import (export_clustering_log, import_restored_data_as_nu
                                traverse_to_method_dir,
                                export_distance_matrix,
                                import_distance_matrix,
-                               plot_graph_clustering_results)
+                               plot_graph_clustering_results,
+                               get_restored_prod_series_dir)
 
 
 def transform_series_into_network(series_matrix: np.ndarray, 
                                   compute_dist=True,
                                   aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                                   threshold: float = None,
+                                  is_prod=False
                                   ):
     
     print("Starting Transformation Process of Time Series into Network Graph...")
@@ -43,7 +45,8 @@ def transform_series_into_network(series_matrix: np.ndarray,
         print(np.min(pearson_dissim_matrix), np.max(pearson_dissim_matrix), np.mean(pearson_dissim_matrix))
         
         export_distance_matrix(pearson_dissim_matrix, 
-                               method=config.DEFAULT_GRAPH_DISSIMILARITY
+                               method=config.DEFAULT_GRAPH_DISSIMILARITY,
+                               is_prod=is_prod
                                )
 
     else:
@@ -51,7 +54,9 @@ def transform_series_into_network(series_matrix: np.ndarray,
             filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
             method=config.DEFAULT_GRAPH_DISSIMILARITY,
             aggregation_method=aggregation_method,
-            date=None)
+            date=None,
+            is_prod=is_prod
+        )
     
     for i in range(N):
         for j in range(i+1, N):
@@ -63,7 +68,7 @@ def transform_series_into_network(series_matrix: np.ndarray,
     return G
     
         
-def visualize_graph(G: nx.Graph, labels=None):
+def visualize_graph(G: nx.Graph, labels=None, is_prod=False):
     
     pos = nx.kamada_kawai_layout(G)
     edge_weights =[G[u][v]['weight'] for u,v in G.edges()]
@@ -88,14 +93,22 @@ def visualize_graph(G: nx.Graph, labels=None):
     filename = f"graph_visualization_{date}.png"
         
 
-    plot_path = os.path.join(
-        config.TO_GRAPH_ANALYSIS_PLOT_DIR,
-        filename
-    )
+    if is_prod:
+        plot_path = os.path.join(
+            config.TO_GRAPH_ANALYSIS_PLOT_DIR,
+            "prod",
+            filename
+        )
+    else:
+        plot_path = os.path.join(
+            config.TO_GRAPH_ANALYSIS_PLOT_DIR,
+            filename
+        )
 
     plt.savefig(plot_path)
     plt.close()
-    print(f"Graph visualization saved to: {plot_path}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Graph Visualisation{prod_tag} saved to: {plot_path}")
     
     
 def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_METHOD):
@@ -132,37 +145,43 @@ def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_M
 def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                             clustering_method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
                             compute_dist=False,
-                            is_normalized=False
+                            is_normalized=False,
+                            is_prod=False
                             ):
     '''Beginns Graph-Analysis Portion of the project. Starts with the transformation of 
     Time Series Data into Nodes and uses Pearson Correlation as Edge weight. After dropping
     edges that do not uphold a certain threshold to make the graph more sparse, the program
     proceeds to cluster the given graph.'''
 
-    series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
+    if is_prod:
+        clustering_source_data_path = get_restored_prod_series_dir(aggregation_method)
+    else:
+        clustering_source_data_path = traverse_to_method_dir(
             config.TO_AGGREGATED_DATA_DIR, 
             aggregation_method
-        ))
+        )
+
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
     
     series_network = transform_series_into_network(series_matrix=series_matrix, 
                                                    compute_dist=compute_dist, 
                                                    aggregation_method=aggregation_method,
-                                                   threshold=config.GRAPH_THRESHOLD)
+                                                   threshold=config.GRAPH_THRESHOLD,
+                                                   is_prod=is_prod
+                                                   )
     
     
-    visualize_graph(series_network)
+    visualize_graph(series_network, is_prod=is_prod)
     
     graph_cluster_labels, comp_time = apply_graph_clustering(series_network)
 
-    series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
-            config.TO_AGGREGATED_DATA_DIR, 
-            aggregation_method
-        ))
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
     
     plot_graph_clustering_results(series_network, 
                                   series_matrix, 
                                   graph_cluster_labels,
-                                  clustering_method
+                                  clustering_method,
+                                  is_prod=is_prod
                                   )
     k = len(np.unique(graph_cluster_labels))
     log = prepare_graph_clustering_log(clustering_method=clustering_method,
@@ -176,6 +195,6 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
                                             computational_time=comp_time,
                                             random_seed=config.RANDOM_SEED)
         
-    export_clustering_log(log)
+    export_clustering_log(log, is_prod=is_prod)
 
 

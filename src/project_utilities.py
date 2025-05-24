@@ -14,6 +14,10 @@ import os
 import re
 import json
 
+def get_restored_prod_series_dir(method_name):
+    '''Retrieves restored production directory for a given method'''
+    return traverse_to_method_dir(os.path.join(config.TO_AGGREGATED_DATA_DIR, method_name), "prod")
+
 def count_extracted_prod_series():
     return len([
         f for f in os.listdir(config.TO_PROD_SERIES_EXPORT_DATA_DIR) 
@@ -23,7 +27,12 @@ def count_extracted_prod_series():
 def import_restored_data_as_numpy(input_dir):
     '''Imports the aggregated data from a given interpolated 
     datafolder and imports it in a 2D numpy array.'''
-    all_files = sorted(os.listdir(input_dir))
+    all_files = sorted([
+        f for f in os.listdir(input_dir)
+        if not f.startswith('.') 
+        and os.path.isfile(os.path.join(input_dir, f))
+        and "ts_prod_data" in f 
+    ])
     
     data_matrix = []
     
@@ -38,7 +47,8 @@ def export_distance_matrix(np_matrix,
                            filename=config.SYN_EXPORT_DIST_MATRIX_NAME, 
                            method=config.DEFAULT_DISSIMILARITY,
                            normalized=False,
-                           aggregation_method=config.DEFAULT_INTERPOLATION_METHOD):
+                           aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
+                           is_prod=False):
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     output_dir = config.TO_DISTANCES_DIR
@@ -53,16 +63,22 @@ def export_distance_matrix(np_matrix,
     
     filename += f"_{date}"
     
-    filepath = os.path.join(output_dir, filename)
+    if is_prod:
+        filepath = os.path.join(output_dir, "prod", filename)
+    else:
+        filepath = os.path.join(output_dir, filename)
+
     np.save(filepath, np_matrix)
-    print(f"Distance matrix saved to: {filepath}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Distance matrix{prod_tag} saved to: {filepath}")
         
         
 def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
                            method=config.DEFAULT_DISSIMILARITY,
                            is_normalize=False,
                            aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
-                           date=None):
+                           date=None,
+                           is_prod=False):
     '''Imports a distance matrix from the respective experiments folder and depending
     on if a specific date has not been passed it will retrieve the newest file or a
     specific one.'''
@@ -78,6 +94,8 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
 
 
         dir_path = config.TO_DISTANCES_DIR
+        if is_prod:
+            dir_path = os.path.join(dir_path, "prod")
         
         all_files = os.listdir(dir_path)
         matching_files = []
@@ -103,11 +121,16 @@ def import_distance_matrix(filename=config.SYN_EXPORT_DIST_MATRIX_NAME,
         else:
             filename_with_date = f"{filename}_{aggregation_method}_raw_{method}{radius_suffix}_{date}.npy"
 
-
-        filepath = os.path.join(config.TO_DISTANCES_DIR, 
-                                filename_with_date)
+        if is_prod:
+            filepath = os.path.join(config.TO_DISTANCES_DIR, 
+                                    "prod", 
+                                    filename_with_date)
+        else: 
+            filepath = os.path.join(config.TO_DISTANCES_DIR, 
+                                    filename_with_date)
     
-    print(f"Loaded distance matrix from: {filepath}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Loaded distance matrix{prod_tag} from: {filepath}")
 
     return np.load(filepath)
     
@@ -228,7 +251,7 @@ def prepare_graph_clustering_log(clustering_method: str,
     return log
 
 
-def export_clustering_log(log_data: dict):
+def export_clustering_log(log_data: dict, is_prod=False):
     '''Function takes in a dictionary of resulting clustering pipeline from either the default
     or the graph clustering process and saves it as a json file in the corresponding directory'''
     
@@ -252,9 +275,15 @@ def export_clustering_log(log_data: dict):
         filename += f"_{distance_measure}_{is_normalized}{is_unsupervised}{timestamp}.json"
 
     if clustering_method in config.CLUSTERING_METHODS:
-        full_path = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, filename)
+        if is_prod:
+            full_path = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, "prod", filename)
+        else:
+            full_path = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, filename)
     else:
-        full_path = os.path.join(config.TO_GRAPH_CLUSTERING_LOGS_DIR, filename)
+        if is_prod:
+            full_path = os.path.join(config.TO_GRAPH_CLUSTERING_LOGS_DIR, "prod", filename)
+        else:
+            full_path = os.path.join(config.TO_GRAPH_CLUSTERING_LOGS_DIR, filename)
 
     with open(full_path, "w", encoding='utf-8') as f: 
         json.dump(log_data, f, ensure_ascii=False, indent=4)
@@ -435,7 +464,8 @@ def plot_silhouette_score(k_values, silhoutte_scores, is_normalized=False):
 def plot_kmedoid_results(series_matrix, 
                          labels, 
                          model, 
-                         is_normalized=False):
+                         is_normalized=False,
+                         is_prod=False):
 
     n_clusters = len(np.unique(labels))
     colors = plt.cm.get_cmap("tab10", n_clusters)
@@ -450,7 +480,7 @@ def plot_kmedoid_results(series_matrix,
     for idx, (series, label) in enumerate(zip(series_matrix,labels)):
         axs[0].plot(time_axis, series, color=colors(label), alpha=0.6, linewidth=0.8)
 
-    axs[0].set_title(f"Full Time Series Colored by Cluster(n = {n_series})" + ("- Normalized" if is_normalized else ""))
+    axs[0].set_title(f"Full Time Series Colored by Cluster(n = {n_series})" + (" - Normalized" if is_normalized else ""))
     axs[0].set_xlabel("Time (Days)")
     axs[0].set_ylabel("Value")
     axs[0].grid(True)
@@ -472,16 +502,23 @@ def plot_kmedoid_results(series_matrix,
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     filename = f"kmedoid_multiseries_{config.DEFAULT_DISSIMILARITY}_{'normalized' if is_normalized else 'raw'}_{date}.png"
         
-
-    plot_path = os.path.join(
-        config.TO_CLUSTERING_PLOTS_DIR,
-        filename
-    )
+    if is_prod:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            "prod",
+            filename
+        )
+    else:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            filename
+        )
 
     plt.tight_layout()
     plt.savefig(plot_path)
     plt.close()
-    print(f"Multi-series clustering plot saved to: {plot_path}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Multi-series clustering Plot{prod_tag} saved to: {plot_path}")
 
 def get_cophenetic_corr(dist_matrix, linkage_method):
     condensed = squareform(dist_matrix)
@@ -492,7 +529,8 @@ def plot_hierachical_results(series_matrix,
                              is_normalized=False, 
                              method="average", 
                              k = None, 
-                             dissimilarity_matrix=None):
+                             dissimilarity_matrix=None,
+                             is_prod=False):
     '''Plots the results of hierarchical clustering. On the left is the dendrogram,
     and on the right is the colored time series by cluster.'''
 
@@ -559,16 +597,23 @@ def plot_hierachical_results(series_matrix,
     else:
         filename += f"raw_{date}.png"
 
-
-    plot_path = os.path.join(
-        config.TO_CLUSTERING_PLOTS_DIR,
-        filename
-    )
+    if is_prod:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            "prod",
+            filename
+        )
+    else:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            filename
+        )
 
     plt.tight_layout()
     plt.savefig(plot_path)
     plt.close()
-    print(f"Multi-series clustering plot saved to: {plot_path}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Multi-series clustering Plot{prod_tag} saved to: {plot_path}")
 
 
 def plot_graph_clustering_results(G: nx.Graph, 
@@ -576,7 +621,8 @@ def plot_graph_clustering_results(G: nx.Graph,
                             cluster_labels: list[int], 
                             method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
                             dist="pearson",
-                            title_suffix: str = ""):
+                            title_suffix: str = "",
+                            is_prod=False):
 
     n_clusters = len(set(cluster_labels))
     colors = plt.cm.get_cmap("tab10", n_clusters)
@@ -612,10 +658,19 @@ def plot_graph_clustering_results(G: nx.Graph,
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     filename = f"graph_{method}_clustering_{dist}_{date}.png"
 
-    plot_path = os.path.join(
-        config.TO_GRAPH_ANALYSIS_PLOT_DIR, 
-        filename)
+    if is_prod:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            "prod",
+            filename
+        )
+    else:
+        plot_path = os.path.join(
+            config.TO_CLUSTERING_PLOTS_DIR,
+            filename
+        )
 
     plt.savefig(plot_path)
     plt.close()
-    print(f"Graph-based clustering visualization saved to: {plot_path}")
+    prod_tag = "(PROD)" if is_prod else ""
+    print(f"Graph-based clustering Visualisation{prod_tag} saved to: {plot_path}")

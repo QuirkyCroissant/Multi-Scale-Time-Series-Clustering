@@ -1,0 +1,4 @@
+# experiments/distance_matrices/prod/.gitignore
+*
+!.gitignore
+!README.md

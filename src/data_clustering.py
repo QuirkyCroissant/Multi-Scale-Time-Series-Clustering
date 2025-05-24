@@ -1,5 +1,5 @@
 import config
-from project_utilities import (import_dataframe_from_csv_indexed, 
+from project_utilities import (get_restored_prod_series_dir, 
                                export_distance_matrix, 
                                import_distance_matrix,
                                plot_silhouette_score,
@@ -90,7 +90,8 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                     k=None,
                                     max_k=config.K_MEDOIDS_DEFAULT_MAX_CLUSTERING_AMOUNT,
                                     save_plots=True,
-                                    is_normalized=False):
+                                    is_normalized=False,
+                                    is_prod=False):
     '''Starts clustering procedure on a retrieved distance matrix applying either `kmedoid` or `hierarchical`'''
     start = time.time()
     best_silhoutte_score = 0
@@ -134,7 +135,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                              computational_time=time_diff,
                                              random_seed=config.RANDOM_SEED)
         
-        export_clustering_log(log)
+        export_clustering_log(log, is_prod=is_prod)
 
         return cluster_labels, model, k
     
@@ -174,7 +175,7 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
                                             computational_time=time_diff,
                                             random_seed=config.RANDOM_SEED)
         
-        export_clustering_log(log)
+        export_clustering_log(log, is_prod=is_prod)
 
         return cluster_labels, model, k
         
@@ -186,18 +187,26 @@ def initiate_clustering_computation(distance_matrix: np.ndarray,
 def start_clustering_pipeline(compute_dist=False, 
                               normalize=False,
                               aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
-                              stop_clustering=False):
+                              stop_clustering=False,
+                              is_prod=False):
     '''Starts the whole clustering process, passing aggregated data through a segmentation preprocessing
     function, computing and saving the associated dissimilarity matrix and later cluster according to 
     the given distance matrix, also able to differenciate between data normalization or not.
     If the user only wants to calculate the distance measures than the clustering process can be aborded 
     preemptively with the stop_clustering parameter.'''
-    if compute_dist:
-        
-        series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
+
+    if is_prod:
+        clustering_source_data_path = get_restored_prod_series_dir(aggregation_method)
+    else:
+        clustering_source_data_path = traverse_to_method_dir(
             config.TO_AGGREGATED_DATA_DIR, 
             aggregation_method
-        ))
+        )
+    
+
+    if compute_dist:
+        
+        series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
         
         #sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
         if normalize:
@@ -220,7 +229,8 @@ def start_clustering_pipeline(compute_dist=False,
         export_distance_matrix(distance_matrix, 
                                method=config.DEFAULT_DISSIMILARITY,
                                normalized=normalize,
-                               aggregation_method=aggregation_method
+                               aggregation_method=aggregation_method,
+                               is_prod=is_prod
                                )
 
 
@@ -236,19 +246,19 @@ def start_clustering_pipeline(compute_dist=False,
             method=config.DEFAULT_DISSIMILARITY,
             is_normalize=normalize,
             aggregation_method=aggregation_method,
-            date=None),
+            date=None,
+            is_prod=is_prod
+            ),
             cluster_method=config.DEFAULT_CLUSTERING_METHOD,
             k=config.DEFAULT_AMOUNT_OF_CLUSTERS if not config.OPTIMIZE_CLUSTER_K else None,
-            is_normalized=normalize
+            is_normalized=normalize,
+            is_prod=is_prod
     )
 
     print("Cluster assignments:", labels)
 
     
-    series_matrix: np.ndarray = import_restored_data_as_numpy(traverse_to_method_dir(
-            config.TO_AGGREGATED_DATA_DIR, 
-            aggregation_method
-        ))
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
         
     if normalize:
             normalized_series_matrix = np.apply_along_axis(zscore, 1, series_matrix)
@@ -258,7 +268,8 @@ def start_clustering_pipeline(compute_dist=False,
         plot_kmedoid_results(series_matrix,
                             labels, 
                             model,
-                            normalize)
+                            normalize,
+                            is_prod=is_prod)
     elif config.DEFAULT_CLUSTERING_METHOD == "hierarchical":
         plot_hierachical_results(series_matrix,
                             labels,
@@ -270,8 +281,10 @@ def start_clustering_pipeline(compute_dist=False,
                                                     method=config.DEFAULT_DISSIMILARITY,
                                                     is_normalize=normalize,
                                                     aggregation_method=aggregation_method,
-                                                    date=None
-                                                    )
+                                                    date=None,
+                                                    is_prod=is_prod
+                                                    ),
+                            is_prod=is_prod
         )
     else:
         raise ValueError(f"Unsupported clustering method. Supported methods are: {config.CLUSTERING_METHODS}")

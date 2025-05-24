@@ -71,20 +71,20 @@ def aggregation_pipeline(restore_method, is_demo_execution, activate_restoration
     
 
 def clustering_pipeline(compute_dist=False, normalize=False, stop_clustering=False,
-                        restore_data_input=config.DEFAULT_INTERPOLATION_METHOD):
+                        restore_data_input=config.DEFAULT_INTERPOLATION_METHOD, is_prod=False):
     '''clustering pipeline, which consists of 2 parts(distance computation and clustering). 
     Included distance argument decides if dissimilarity is computed or an already exported 
     matrix is used for the subsequent clustering. Returns which aggregation method was used,
     on which clustering was used.'''
     start_clustering_pipeline(compute_dist, normalize, stop_clustering=stop_clustering, 
-                              aggregation_method=restore_data_input)
+                              aggregation_method=restore_data_input, is_prod=is_prod)
     
 def graph_clustering_pipeline(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
                               clustering_method=config.DEFAULT_GRAPH_CLUSTERING_METHOD,
-                              compute_dist=False):
+                              compute_dist=False, is_prod=False):
     initiate_graph_analysis(aggregation_method=aggregation_method, 
                             clustering_method=clustering_method,
-                            compute_dist=compute_dist)
+                            compute_dist=compute_dist, is_prod=is_prod)
     
 
 def run_prototype(generate_data, 
@@ -187,18 +187,45 @@ def run_prototype(generate_data,
         print("No clustering method provided")
     
 
-def run_final(aggregation_method, clustering_method):
-    '''TODO: production ready implementation which will be 
-       implemented after an sufficient prototyp'''
+def run_final(restore=False,
+              restore_method=config.DEFAULT_INTERPOLATION_METHOD,
+              compute_dist=False,
+              normalize=False,
+              cluster_methodology=config.DEFAULT_CLUSTERING_METHOD):
+    '''Initiating production mode of the application, which consists of
+    ingesting external dataset(s), restoring them(if needed), computes 
+    distances between serieses and clustering them with traditional and/or
+    graph algorithms.'''
     print("Running Application in Production mode:")
     preprocess_prod_data_to_series()
 
     config.AMOUNT_OF_INDIVIDUAL_SERIES = count_extracted_prod_series()
 
     print("Running Restoration Pipeline in Production mode:")
-    aggregation_pipeline(aggregation_method, 
+    aggregation_pipeline(restore_method, 
                          is_demo_execution=False, 
-                         activate_restoration=True)
+                         activate_restoration=restore)
+    
+    if compute_dist and cluster_methodology is None:
+        print("PRODUCTION MODE: Only computing distance matrix, no clustering requested.")
+        clustering_pipeline(compute_dist=True, 
+                            normalize=normalize, 
+                            stop_clustering=True,
+                            restore_data_input=restore_method,
+                            is_prod=True)
+
+    elif cluster_methodology in config.CLUSTERING_METHODS:
+        print("Triggering Clustering Pipeline")
+        clustering_pipeline(compute_dist=compute_dist, normalize=normalize,
+                            restore_data_input=restore_method, is_prod=True)
+    elif cluster_methodology in config.GRAPH_CLUSTERING_METHODS:
+        print("Triggering Graph Analysis Pipeline")
+        graph_clustering_pipeline(aggregation_method=restore_method, 
+                                  clustering_method=cluster_methodology,
+                                  compute_dist=compute_dist,
+                                  is_prod=True)
+    else:
+        print("No clustering method provided")
     
 
 
@@ -292,7 +319,23 @@ def main():
 
     parser_prod = subparsers.add_parser("prod", parents=[global_parser], help="Run production mode for real datasets")
     
-    # TODO: TBD same as demo aggregation, dist and clustering arguments
+    parser_prod.add_argument(
+        "--restore",
+        action="store_true",
+        help="Aggregate, interpolate and save faulty input data (data/restored)"
+    )
+
+    parser_prod.add_argument(
+        "--distance",
+        action="store_true",
+        help="Compute and save the (dis)-/similarity measures (experiments/distance_matrices)"
+    )
+
+    parser_prod.add_argument(
+        "--normalized",
+        action="store_true",
+        help="Apply Z-normalization to each time series before clustering"
+    )
 
     # ----------------
     # Eval Mode
@@ -368,7 +411,12 @@ def main():
             cluster_methodology=cluster_method
         )
     elif args.mode == "prod":
-        run_final(restore_method, cluster_method)
+        run_final(restore_method=restore_method, 
+                  restore=args.restore,
+                  compute_dist=args.distance,
+                  normalize=args.normalized,
+                  cluster_methodology=cluster_method
+        )
 
     elif args.mode == "eval":
         

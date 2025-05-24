@@ -1,0 +1,1 @@
+This folder might store clustering visualisation files generated from production datasets. For privacy and storage reasons, it is excluded from version control.
