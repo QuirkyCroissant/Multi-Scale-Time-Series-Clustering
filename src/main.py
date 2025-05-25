@@ -368,18 +368,17 @@ def main():
     )
 
     # Clustering Prod
-    # TODO: Check for approval
 
-    #parser_eval_cluster_prod = eval_subparsers.add_parser(
-    #    "clustering_prod", 
-    #    help="Evaluate production clustering results"
-    #)
-    #parser_eval_cluster_prod.add_argument(
-    #    "--metrics", nargs='+', 
-    #    required=True, 
-    #    choices=config.CLUSTERING_INTERNAL_METRICS,
-    #    help="Metrics to compute (Silhouette, Modularity etc)"
-    #)
+    parser_eval_cluster_prod = eval_subparsers.add_parser(
+        "clustering_prod", 
+        help="Evaluate production clustering results"
+    )
+    parser_eval_cluster_prod.add_argument(
+        "--metrics", nargs='+', 
+        required=True, 
+        choices=config.CLUSTERING_EXTERNAL_METRICS,
+        help="Metrics to compute (ARI, (A)-/RAND, NMI etc)"
+    )
 
     # ----------------
     # Handle Arguments

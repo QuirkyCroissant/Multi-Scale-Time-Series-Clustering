@@ -17,7 +17,7 @@ def check_metrics(mode, metrics):
     elif mode == "clustering_demo":
         allowed_metrics = config.CLUSTERING_EXTERNAL_METRICS
     else:
-        allowed_metrics = config.CLUSTERING_INTERNAL_METRICS
+        allowed_metrics = config.CLUSTERING_EXTERNAL_METRICS
     
     for metric in metrics:
         if metric not in allowed_metrics:
@@ -220,23 +220,29 @@ def compute_similarity_of_clustering_methodologies(traditional_results, graph_re
     return pd.DataFrame(results)
 
 
-def evaluate_clustering_results(metrics):
+def evaluate_clustering_results(metrics, is_prod=False):
     '''Starts the evaluation process for the clustering part of the project. Triggers and forwards all
     relevant parts to process the corresponding log files and aggregate them to a join table, which gets
     exported in the end.'''
 
-    traditional_results = import_latest_clustering_logs(config.TO_DEFAULT_CLUSTERING_LOGS_DIR)
-    graph_results = import_latest_clustering_logs(config.TO_GRAPH_CLUSTERING_LOGS_DIR)
+    log_dir_suffix = "prod" if is_prod else ""
+    default_dir = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, log_dir_suffix)
+    graph_dir = os.path.join(config.TO_GRAPH_CLUSTERING_LOGS_DIR, log_dir_suffix)
+
+    traditional_results = import_latest_clustering_logs(default_dir)
+    graph_results = import_latest_clustering_logs(graph_dir)
     
     df_clustering_comparison = compute_similarity_of_clustering_methodologies(traditional_results, graph_results)
     print(df_clustering_comparison)
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+    eval_dir = os.path.join(config.TO_EVAL_CLUSTERING_DIR, "prod" if is_prod else "")
     export_dataframe_to_csv(df=df_clustering_comparison, 
                             filename=f"{config.CLUSTERING_RAW_TABLE_EXPORT_NAME}_{timestamp}", 
-                            output_dir=config.TO_EVAL_CLUSTERING_DIR,
-                            eval=True)
+                            output_dir=eval_dir,
+                            eval=True,
+                            prod=is_prod)
 
     
 
@@ -253,6 +259,7 @@ def initialise_specific_evaluation(mode: str, metrics=[]):
 
     elif mode == "clustering_prod":
         check_metrics(mode, metrics)
-        pass
+        evaluate_clustering_results(metrics, is_prod=True)
+        
     else:
         raise ValueError(f"Unsupported evaluation mode: {mode}")
