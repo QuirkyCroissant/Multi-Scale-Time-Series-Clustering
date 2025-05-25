@@ -4,14 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## v1.0.0 - Upcoming
+## v1.0.0 - 2025-05-26
 
-### Planned
-- Addition of evaluation mode for clustering results (Rand Index, Adjusted Rand, NMI, ARI)
-- Automation of experimental runs with flexible override of key config variables via CLI (optional)
-- Separation of analysis workflows for synthetic datasets (with ground truth) vs. production datasets (without ground truth)
-- Refined export of interpolation evaluation (MAPE, MSE) for synthetic experiments
-- Distinction between graph-based and classic clustering workflows
+### Added
+- Full support for **production datasets** with version-control-safe export of:
+  - Time series restoration results
+  - Distance matrices
+  - Clustering results (k-Medoids, Hierarchical, Louvain, Greedy Modularity, and Label Propagation)
+  - Plots and evaluation logs
+- `prod` mode: compatible CLI pipeline for ingestion, restoration, dissimilarity calculation, and clustering
+- Separate subdirectories for production artifacts (`/prod` in logs, plots, and distance matrices)
+- Robust clustering evaluation mode for production datasets (`clustering_prod`) with support for external metrics
+- Runtime flag `--restore` and support for running all or specific aggregation/clustering methods in prod
+
+### Changed
+- Reworked `start_clustering_pipeline()` and related modules to handle both demo and prod safely
+- Ensured all exports (logs, plots, matrices) route to compliant paths
+- Refined `export_clustering_log()` and related helpers to prevent public leakage of production data
+
+### Fixed
+- Compatibility bugs in `fastDTW` patching guide and distance matrix import logic
 
 ---
 

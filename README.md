@@ -47,7 +47,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 - **Develop clustering algorithms:** Create/apply methods that effectively cluster time-series data with different scalings.
 - **Evaluate performance:** Test and validate the algorithms on various datasets.
 - **Extension:** Completed graph representation of time series and graph-based clustering (Louvain, Modularity, Label Propagation). 
-- **Evaluation (Work-in-Progress):** Add comprehensive evaluation pipeline to automatically analyze clustering and restoration accuracy across demo (synthetic) and production (real-world) datasets.
+- **Evaluation:** Includes full evaluation pipeline for both demo (synthetic) and production (real-world) datasets, including restoration accuracy (MSE, MAPE) and clustering metrics (ARI, RAND, NMI).
 
 
 ## Project Structure
@@ -110,7 +110,7 @@ This repository contains code and documentation for my bachelor thesis on cluste
 
 ## ⚠️ FastDTW: How to Patch It
   
-> This project uses [`fastdtw`](https://github.com/slaypni/fastdtw)(Version 0.3.1) with a **minor source patch** to enable proper compilation of its C extension. The published version contains a broken fallback for importing `INFINITY`, which prevents compiling correctly.
+> This project uses [`fastdtw`](https://github.com/slaypni/fastdtw)(Version 0.3.4) with a **minor source patch** to enable proper compilation of its C extension. The published version contains a broken fallback for importing `INFINITY`, which prevents compiling correctly.
 >
 > Without fixing this, FastDTW runs in **pure Python**, and can be **50× slower**!
 
@@ -194,7 +194,8 @@ This repository contains code and documentation for my bachelor thesis on cluste
     python src/main.py demo --new_data --restore --dist --comp_img
 
     # PRODUCTION (Real datasets - currently placeholder)
-    python src/main.py prod
+    python src/main.py prod --restore --distance --cluster_method kmedoids
+    python src/main.py prod --restore --distance --cluster_method hierarchical --dist_method fastDTW --dist_radius 5
 
     # EVALUATION (Analyse restoration and clustering metrics)
     python src/main.py eval aggregation --metrics MSE MAPE
@@ -239,8 +240,9 @@ This repository contains code and documentation for my bachelor thesis on cluste
       - `clustering_demo`: Analyses synthetic clustering quality metrics
         - `ARI`, `RAND`, `NMI`
       - `clustering_prod`: Analyses provided real-world clustering quality metrics
-        - `Silhouette`, `Modularity`
+        - `ARI`, `RAND`, `NMI`
       - `--metrics`: **Required** List of evaluation metrics to compute
+      - Automatically matches latest logs and supports graph vs. traditional comparisons
 
 
 
