@@ -9,7 +9,20 @@ import os
 import time
 
 def interpolate_dataset(dataframe: pd.DataFrame, freq='D', method='linear', spline_order=3):
-    '''Applies interpolation(linear/cubic splines) onto the given dataset depending on the parameters'''
+    '''Applies interpolation onto the given dataset depending on the parameters'''
+
+    if not isinstance(dataframe.index, pd.DatetimeIndex):
+        if 'time' in dataframe.columns:
+            dataframe['time'] = pd.to_datetime(dataframe['time'])
+            dataframe.set_index('time', inplace=True)
+        else:
+            raise ValueError("Expected 'time' column for datetime index.")
+
+    if not dataframe.index.is_unique:
+        duplicates = dataframe.index.duplicated(keep='first')
+        print(f"WARN: Dropped {duplicates.sum()} duplicate timestamps before reindexing.")
+        dataframe = dataframe[~duplicates]
+
     full_index = pd.date_range(start=pd.to_datetime(config.TIME_SERIES_START_DATE), 
                                periods=config.PERIOD_LENGTH, 
                                freq=freq)
@@ -63,9 +76,9 @@ def run_restoration_methods(dataframe: pd.DataFrame, series_id=0,
                 repaired_df = interpolate_dataset(df, method=method_name)
                 break  
             except ValueError as e:
-                print(f"[Warning] Attempt {attempt}/{MAX_RETRIES} failed for method '{method_name}' on Series #{series_id}: {e}")
+                print(f"WARN: Attempt {attempt}/{MAX_RETRIES} failed for method '{method_name}' on Series #{series_id}: {e}")
                 if attempt == MAX_RETRIES:
-                    print(f"[Skip] Interpolation failed permanently for '{method_name}' on Series #{series_id}")
+                    print(f"SKIP: Interpolation failed permanently for '{method_name}' on Series #{series_id}")
                     repaired_df = None
                     break
                 else:
