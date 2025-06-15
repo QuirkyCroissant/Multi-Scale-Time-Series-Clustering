@@ -206,7 +206,7 @@ def start_clustering_pipeline(compute_dist=False,
 
     if compute_dist:
         
-        series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
+        series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path, is_prod=is_prod)
         
         #sequences = convert_to_segmented_series(time_series_data, config.SEGMENTATION_WINDOW)
         if normalize:
@@ -258,7 +258,7 @@ def start_clustering_pipeline(compute_dist=False,
     print("Cluster assignments:", labels)
 
     
-    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path, is_prod=is_prod)
         
     if normalize:
             normalized_series_matrix = np.apply_along_axis(zscore, 1, series_matrix)

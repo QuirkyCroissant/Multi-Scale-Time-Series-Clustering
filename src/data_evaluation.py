@@ -134,6 +134,8 @@ def parse_filename_to_metadata(filename):
     try:
         method = parts[1]
         distance = parts[2]
+        if "fastDTW" in distance and "r" in parts[3]:
+            distance += f"_{parts[3]}"
     except IndexError:
         raise ValueError(f"Invalid log file format, missing parts(method/distance): {base}")
     
@@ -245,6 +247,113 @@ def evaluate_clustering_results(metrics, is_prod=False):
                             prod=is_prod)
 
     
+def evaluate_fastdtw_vs_dtw(is_prod=False):
+    '''
+    Evaluates all fastDTW log files and compares them against a single DTW baseline log.
+    '''
+
+    HARDCODED_DTW_DISTANCE_TIME = 5.0
+    HARDCODED_FASTDTW_DISTANCE_TIME = 1.0
+
+    log_dir = os.path.join(config.TO_DEFAULT_CLUSTERING_LOGS_DIR, "prod" if is_prod else "")
+    results = []
+
+    dtw_log = None
+    fastdtw_logs = []
+
+    for fname in os.listdir(log_dir):
+        if not fname.endswith(".json"):
+            continue
+
+        fpath = os.path.join(log_dir, fname)
+
+        try:
+            metadata = parse_filename_to_metadata(fname)
+        except Exception as e:
+            print(f"Skipping {fname}: could not parse metadata ({e})")
+            continue
+
+        with open(fpath, "r", encoding="utf-8") as f:
+            log = json.load(f)
+
+        
+        if metadata["distance"] == "dtw" and dtw_log is None:
+            dtw_log = log
+            dtw_log["filename"] = fname
+            dtw_log["computationalTime"] += HARDCODED_DTW_DISTANCE_TIME
+
+
+        elif metadata["distance"].startswith("fastDTW"):
+            runtime = log.get("computationalTime")
+            runtime += HARDCODED_FASTDTW_DISTANCE_TIME
+            radius = metadata.get("radius")
+            labels = log.get("labels")
+
+            if runtime is None:
+                print(f"SKIP: {fname}: Missing runtime")
+            elif radius is None:
+                print(f"SKIP: {fname}: Missing radius")
+            else:
+                print(f"ADD: {fname} | radius={radius}, runtime={runtime}")
+                fastdtw_logs.append({
+                    "radius": radius,
+                    "runtime": runtime,
+                    "labels": labels,
+                    "filename": fname,
+                })
+
+
+    if dtw_log is None:
+        raise FileNotFoundError("No DTW baseline log found in directory.")
+    
+    baseline_labels = dtw_log["labels"]
+
+    if not fastdtw_logs:
+        raise RuntimeError("No fastDTW logs found in directory.")
+
+    dtw_runtime = dtw_log.get("computationalTime")
+
+    for log in sorted(fastdtw_logs, key=lambda x: x["radius"] or 0):
+
+        ari = adjusted_rand_score(baseline_labels, log["labels"])
+        nmi = normalized_mutual_info_score(baseline_labels, log["labels"])
+        rand = rand_score(baseline_labels, log["labels"])
+
+        result = {
+            "FastDTW Radius": log["radius"],
+            "Runtime (s)": log["runtime"],
+            "Speedup vs. DTW": None if not log["runtime"] else round(dtw_runtime / log["runtime"], 3),
+            "ARI": ari,
+            "NMI": nmi,
+            "RAND": rand,
+            "Log File": log["filename"]
+            
+        }
+        results.append(result)
+
+    if is_prod:
+        output_dir = os.path.join(
+            config.TO_EVAL_CLUSTERING_DIR,
+            "prod"
+        )
+    else:
+        output_dir = os.path.join(
+            config.TO_EVAL_CLUSTERING_DIR
+        )
+    
+
+    df = pd.DataFrame(results).sort_values("FastDTW Radius")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    export_dataframe_to_csv(df, 
+                            filename=f"fastdtw_vs_dtw_evaluation_{timestamp}", 
+                            output_dir=output_dir, 
+                            eval=True, 
+                            prod=is_prod)
+    
+    print(df)
+    print("fastDTW vs. DTW evaluation completed and saved.")
+
+
 
 
 def initialise_specific_evaluation(mode: str, metrics=[]):
@@ -260,6 +369,9 @@ def initialise_specific_evaluation(mode: str, metrics=[]):
     elif mode == "clustering_prod":
         check_metrics(mode, metrics)
         evaluate_clustering_results(metrics, is_prod=True)
-        
+    
+    elif mode == "dtw_comparison":
+        evaluate_fastdtw_vs_dtw(is_prod=True)
+
     else:
         raise ValueError(f"Unsupported evaluation mode: {mode}")

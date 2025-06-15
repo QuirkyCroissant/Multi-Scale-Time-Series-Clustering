@@ -93,7 +93,7 @@ def run_prototype(generate_data,
                   compute_dist=False,
                   normalize=False,
                   plot=False,
-                  cluster_methodology=config.DEFAULT_CLUSTERING_METHOD
+                  cluster_methodology=None
                   ):
     '''function which triggers prototyp mode of application,
         which consists of generating a synthetic heterogeneous
@@ -191,28 +191,36 @@ def run_final(restore=False,
               restore_method=config.DEFAULT_INTERPOLATION_METHOD,
               compute_dist=False,
               normalize=False,
-              cluster_methodology=config.DEFAULT_CLUSTERING_METHOD):
+              cluster_methodology=None):
     '''Initiating production mode of the application, which consists of
     ingesting external dataset(s), restoring them(if needed), computes 
     distances between serieses and clustering them with traditional and/or
     graph algorithms.'''
     print("Running Application in Production mode:")
-    preprocess_prod_data_to_series()
-
-    config.AMOUNT_OF_INDIVIDUAL_SERIES = count_extracted_prod_series()
-
-    print("Running Restoration Pipeline in Production mode:")
-    aggregation_pipeline(restore_method, 
-                         is_demo_execution=False, 
-                         activate_restoration=restore)
     
-    if compute_dist and cluster_methodology is None:
-        print("PRODUCTION MODE: Only computing distance matrix, no clustering requested.")
-        clustering_pipeline(compute_dist=True, 
-                            normalize=normalize, 
-                            stop_clustering=True,
-                            restore_data_input=restore_method,
-                            is_prod=True)
+    # restore is used as new_data flag
+    if restore:
+        preprocess_prod_data_to_series(limit=config.AMOUNT_OF_INDIVIDUAL_SERIES)
+
+        config.AMOUNT_OF_INDIVIDUAL_SERIES = count_extracted_prod_series()
+
+        print("Running Restoration Pipeline in Production mode:")
+        aggregation_pipeline(restore_method, 
+                            is_demo_execution=False, 
+                            activate_restoration=restore)
+    
+
+    if cluster_methodology is None:
+        if compute_dist:
+            print("Production mode: Only computing distance matrix, no clustering requested.")
+            clustering_pipeline(compute_dist=True, 
+                                normalize=normalize, 
+                                stop_clustering=True,
+                                restore_data_input=restore_method,
+                                is_prod=True)
+        else:
+            print("Only ingestion/restoration requested. Skipping clustering.")
+        return
 
     elif cluster_methodology in config.CLUSTERING_METHODS:
         print("Triggering Clustering Pipeline")
@@ -380,6 +388,12 @@ def main():
         help="Metrics to compute (ARI, (A)-/RAND, NMI etc)"
     )
 
+      # dtw fast dtw clustering evaluation
+    parser_eval_agg = eval_subparsers.add_parser(
+        "dtw_comparison", 
+        help="Evaluate dynamic time warping vs. fast dynamic time warping results"
+    )
+
     # ----------------
     # Handle Arguments
     # ----------------
@@ -397,7 +411,22 @@ def main():
     
     # fallback defaults to args
     restore_method = args.restore_method or config.DEFAULT_INTERPOLATION_METHOD
-    cluster_method = args.cluster_method or config.DEFAULT_CLUSTERING_METHOD
+    if args.mode == "demo":
+        if hasattr(args, "distance") and args.distance:
+            cluster_method = args.cluster_method
+        else:
+            cluster_method = args.cluster_method or config.DEFAULT_CLUSTERING_METHOD
+    # needs to keep cluster_method empty in case we only want to ingest the data without computing the distance matrix
+    elif args.mode == "prod":
+        if args.distance:  # computing a new distance matrix
+            cluster_method = args.cluster_method  # may be None (just compute), or set (do clustering after)
+        elif args.cluster_method:  # clustering only (using precomputed distance matrix)
+            cluster_method = args.cluster_method
+        elif args.restore:  # only ingestion/restoration
+            cluster_method = None
+        else:
+            # fallback: no action requested
+            cluster_method = None
 
     if args.mode == "demo":
         run_prototype(
@@ -425,6 +454,8 @@ def main():
             run_evaluation(mode=args.eval_mode, metrics=args.metrics)
         elif args.eval_mode == "clustering_prod":
             run_evaluation(mode=args.eval_mode, metrics=args.metrics)
+        elif args.eval_mode == "dtw_comparison":
+            run_evaluation(mode=args.eval_mode)
 
     else:
         parser.print_help()

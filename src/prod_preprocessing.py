@@ -8,7 +8,7 @@ from project_utilities import (import_dataframe_from_csv,
 import config
 
 
-def preprocess_prod_data_to_series(limit=40):
+def preprocess_prod_data_to_series(limit=config.AMOUNT_OF_INDIVIDUAL_SERIES):
     """Efficiently processes Smart Meter CSV files from London dataset into 1D time series per household.
     This version supports multiple input CSVs and applies a household limit for scalability."""
 

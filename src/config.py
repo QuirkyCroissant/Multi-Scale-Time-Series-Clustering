@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 # defines how many time series should be generated for the synthetic data sets
-AMOUNT_OF_INDIVIDUAL_SERIES = 10
+AMOUNT_OF_INDIVIDUAL_SERIES = 100
 
 # Preset meta configurations for synthetic time series profiles
 SYN_SERIES_PROFILES = {

@@ -24,23 +24,44 @@ def count_extracted_prod_series():
         if f.startswith(config.PROD_EXPORT_DATA_NAME) and f.endswith("_raw")
     ])
 
-def import_restored_data_as_numpy(input_dir):
-    '''Imports the aggregated data from a given interpolated 
-    datafolder and imports it in a 2D numpy array.'''
+def import_restored_data_as_numpy(input_dir, is_prod=False):
+    '''
+    Loads interpolated time series data from a given folder into a 2D NumPy array.
+    Handles both demo and prod modes dynamically, avoids broken files, and supports any interpolation method.
+    '''
+
+    prefix = "ts_prod_data" if is_prod else "ts_demo_data"
+
+    # Collect all matching files that contain any known interpolation suffix
+    valid_suffixes = tuple(config.INTERPOLATION_METHODS)
     all_files = sorted([
         f for f in os.listdir(input_dir)
-        if not f.startswith('.') 
-        and os.path.isfile(os.path.join(input_dir, f))
-        and "ts_prod_data" in f 
+        if f.startswith(prefix) and f.endswith(valid_suffixes)
     ])
-    
+
     data_matrix = []
-    
+
     for file in all_files:
-        current_time_series = np.loadtxt(os.path.join(input_dir,file), delimiter=';', skiprows=1, usecols=1, dtype=np.float32)
-        data_matrix.append(current_time_series)
-    
-    return np.array(data_matrix)
+        path = os.path.join(input_dir, file)
+        try:
+            series = np.genfromtxt(
+                path,
+                delimiter=';',
+                skip_header=1,
+                usecols=1,
+                dtype=np.float32,
+                invalid_raise=False
+            )
+
+            # Only include valid series
+            if len(series) > 0 and not np.any(np.isnan(series)):
+                data_matrix.append(series)
+            else:
+                print(f"Skipping {file}: empty or contains NaNs.")
+        except Exception as e:
+            print(f"Error reading {file}: {e}")
+
+    return np.vstack(data_matrix)
     
 
 def export_distance_matrix(np_matrix, 
@@ -321,7 +342,7 @@ def export_dataframe_to_csv(df,
 
     filepath = os.path.join(output_dir, filename)
 
-    df.to_csv(filepath, index=False, sep=';')
+    df.to_csv(filepath, index=False, sep=';', encoding="utf-8")
     print(f"DataFrame exported to: {filepath}")
     
 def traverse_to_method_dir(traversal_string, method_name):
