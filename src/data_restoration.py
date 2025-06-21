@@ -28,18 +28,22 @@ def interpolate_dataset(dataframe: pd.DataFrame, freq='D', method='linear', spli
                                freq=freq)
     df_full = dataframe.reindex(full_index)
     
-    if (method == 'krogh' or method == 'piecewise_polynomial' 
-    or method == 'pchip' or method == 'akima' or method == 'cubicspline' 
-    or method == 'polynomial' or method == 'spline'):
-        df_repaired = df_full.interpolate(method=method, order=spline_order)
+    try:
+        if (method == 'krogh' or method == 'piecewise_polynomial' 
+        or method == 'pchip' or method == 'akima' or method == 'cubicspline' 
+        or method == 'polynomial' or method == 'spline'):
+            df_repaired = df_full.interpolate(method=method, order=spline_order)
 
-    elif (method == 'linear' or method == 'time' or method == 'index' or method == 'values' 
-    or method == 'pad' or method == 'nearest' or method == 'zero' 
-    or method == 'slinear' or method == 'quadratic' or method == 'cubic' 
-    or method == 'barycentric'):
-        df_repaired = df_full.interpolate(method=method)
-    else:
-        raise ValueError(f"Unsupported interpolation method. {method}")
+        elif (method == 'linear' or method == 'time' or method == 'index' or method == 'values' 
+        or method == 'pad' or method == 'nearest' or method == 'zero' 
+        or method == 'slinear' or method == 'quadratic' or method == 'cubic' 
+        or method == 'barycentric'):
+            df_repaired = df_full.interpolate(method=method)
+        else:
+            raise ValueError(f"Unsupported interpolation method. {method}")
+    except Exception as e:
+        print(f"Fallback-Interpolation with method '{method}' failed: {e}. Falling back to 'linear'.")
+        df_repaired = df_full.interpolate(method='linear')
 
     df_repaired.fillna(method="ffill", inplace=True)
     df_repaired.fillna(method="bfill", inplace=True)
