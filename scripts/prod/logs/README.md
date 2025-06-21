@@ -1,0 +1,1 @@
+This folder might store log files of batch script runs from data originating from production. For privacy and storage reasons, it is excluded from version control.
