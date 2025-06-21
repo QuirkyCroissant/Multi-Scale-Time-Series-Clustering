@@ -70,7 +70,11 @@ def compute_distance_matrix(sequences: np.ndarray,
         
 
     def compute_distance_pair(i, j, dist):
-        return i,j, dist(sequences[i], sequences[j])
+        try:
+            return i,j, dist(sequences[i], sequences[j])
+        except ValueError as e:
+            print(f"WARN: Failed {method} between series {i} and {j}. Error: {e}")
+            return i,j, np.inf
     
     pairs = [(i, j) for i in range(N) for j in range(i+1, N)]
     results = Parallel(n_jobs=-1)(
@@ -217,6 +221,14 @@ def start_clustering_pipeline(compute_dist=False,
                                                   method=config.DEFAULT_DISSIMILARITY,
                                                   normalize=normalize
                                                   )
+        
+        # Checking for NaNs and np.inf from invalid dtw or pearson runs and converting them
+        finite_indication_boolean_matrix = np.isfinite(distance_matrix)
+        if not np.all(finite_indication_boolean_matrix):
+            max_series_value = np.max(distance_matrix[finite_indication_boolean_matrix])
+            fallback_value = max_series_value + 1
+            distance_matrix[~finite_indication_boolean_matrix] = fallback_value
+            print(f"WARN: Found NaN or Inf values in distance matrix. Replaced with fallback value: {fallback_value}")
         
         print("Distance matrix statistics:")
         print(distance_matrix.shape)

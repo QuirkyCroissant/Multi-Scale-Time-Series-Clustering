@@ -161,7 +161,7 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
             aggregation_method
         )
 
-    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path, is_prod=is_prod)
     
     series_network = transform_series_into_network(series_matrix=series_matrix, 
                                                    compute_dist=compute_dist, 
@@ -175,7 +175,7 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
     
     graph_cluster_labels, comp_time = apply_graph_clustering(series_network)
 
-    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path)
+    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path, is_prod=is_prod)
     
     plot_graph_clustering_results(series_network, 
                                   series_matrix, 
