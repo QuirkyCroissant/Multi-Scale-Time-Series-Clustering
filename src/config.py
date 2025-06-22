@@ -134,7 +134,7 @@ DEFAULT_AMOUNT_OF_CLUSTERS = 4
 ### Graph parameters
 
 # lets keep only edges which have a similarity of at least 30%
-GRAPH_THRESHOLD = 0.3
+GRAPH_THRESHOLD = 0.2435
 DEFAULT_GRAPH_DISSIMILARITY = DISSIMILARITY_MEASURES[2]
 
 DEFAULT_GRAPH_CLUSTERING_METHOD = "louvain"
