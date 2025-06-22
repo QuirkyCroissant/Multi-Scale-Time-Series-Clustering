@@ -200,20 +200,23 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
                                                    is_prod=is_prod
                                                    )
     
-    if series_network.number_of_nodes() <= 100:
+    is_plotting_graph = True if series_network.number_of_nodes() <= 100 else False
+    
+    if is_plotting_graph:
         visualise_graph(series_network, is_prod=is_prod)
     else:
         print(f"Graph too large to be visualized. Refrain from plotting network plot.")
     
     graph_cluster_labels, comp_time = apply_graph_clustering(series_network)
 
-    
-    plot_graph_clustering_results(series_network, 
-                                  series_matrix, 
-                                  graph_cluster_labels,
-                                  clustering_method,
-                                  is_prod=is_prod
-                                  )
+    if is_plotting_graph:
+        plot_graph_clustering_results(series_network, 
+                                    series_matrix, 
+                                    graph_cluster_labels,
+                                    clustering_method,
+                                    is_prod=is_prod
+                                    )
+        
     k = len(np.unique(graph_cluster_labels))
     log = prepare_graph_clustering_log(clustering_method=clustering_method,
                                             edge_weight_metric=config.DEFAULT_GRAPH_DISSIMILARITY,
