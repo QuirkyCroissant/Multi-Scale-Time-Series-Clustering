@@ -1,6 +1,7 @@
 import time
 import networkx as nx
 import community as community_louvain
+from collections import Counter
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
@@ -58,17 +59,27 @@ def transform_series_into_network(series_matrix: np.ndarray,
             is_prod=is_prod
         )
     
-    for i in range(N):
-        for j in range(i+1, N):
-            weight = pearson_dissim_matrix[i][j]
-            if weight > threshold:
-                G.add_edge(i, j, weight=weight)
+    #for i in range(N):
+    #    for j in range(i+1, N):
+    #        weight = pearson_dissim_matrix[i][j]
+    #        if weight > threshold:
+    #            G.add_edge(i, j, weight=weight)
     
+    # similar to the distance matrix computation, here a more vectorised approach
+    # of finding out the coordinates of the pairwise comparisons which fullfill
+    # the threshold condition and adds them to the graph by refraining from pure-Python
+    i_idx, j_idx = np.where(np.triu(pearson_dissim_matrix, k=1) > threshold)
+    G.add_edges_from( 
+        (i, j, {
+            'weight': pearson_dissim_matrix[i][j]
+            }) for i, j in zip(i_idx, j_idx))
+    
+
     print("Completed Transformation Process of Time Series into Network Graph.")
     return G
     
         
-def visualize_graph(G: nx.Graph, labels=None, is_prod=False):
+def visualise_graph(G: nx.Graph, labels=None, is_prod=False):
     
     pos = nx.kamada_kawai_layout(G)
     edge_weights =[G[u][v]['weight'] for u,v in G.edges()]
@@ -115,6 +126,14 @@ def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_M
     '''Applies graph clustering algorithms depending on the input parameter: louvain uses the popular 
     modularity based algorithm, modularity uses a greedy heuristic and label uses label propagation'''
 
+    print(f"Starting Graph Clustering with {method}")
+
+    if G.number_of_edges() > 1_000_000:
+        print("WARN: Graph is very dense! Consider raising threshold.")
+
+    print(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges")
+    print(f"Average degree: {np.mean([d for _, d in G.degree()]):.2f}")
+
     start = time.time()
 
     if method == "louvain":
@@ -138,8 +157,19 @@ def apply_graph_clustering(G: nx.Graph, method=config.DEFAULT_GRAPH_CLUSTERING_M
     else:
         raise ValueError(f"Unsupported graph clustering method: {method}")
     
+    time_difference = time.time() - start
+    
+    # result diagnostics
+    label_cnt = Counter(labels)
+    n_clusters = len(label_cnt)
+    cluster_sizes = sorted(label_cnt.items(), key=lambda x: -x[1])
+    
+    print(f"Found {n_clusters} clusters")
+    print(f"Top 3 cluster sizes:")
+    for i, (cluster_id, size) in enumerate(cluster_sizes[:3]):
+        print(f"Cluster {cluster_id}: {size} nodes")
 
-    return labels, time.time() - start
+    return labels, time_difference
 
 
 def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METHOD,
@@ -170,12 +200,13 @@ def initiate_graph_analysis(aggregation_method=config.DEFAULT_INTERPOLATION_METH
                                                    is_prod=is_prod
                                                    )
     
-    
-    visualize_graph(series_network, is_prod=is_prod)
+    if series_network.number_of_nodes() <= 100:
+        visualise_graph(series_network, is_prod=is_prod)
+    else:
+        print(f"Graph too large to be visualized. Refrain from plotting network plot.")
     
     graph_cluster_labels, comp_time = apply_graph_clustering(series_network)
 
-    series_matrix: np.ndarray = import_restored_data_as_numpy(clustering_source_data_path, is_prod=is_prod)
     
     plot_graph_clustering_results(series_network, 
                                   series_matrix, 
