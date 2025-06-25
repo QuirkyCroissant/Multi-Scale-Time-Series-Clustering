@@ -167,13 +167,19 @@ def import_latest_clustering_logs(log_dir):
             continue
         try:
             metadata = parse_filename_to_metadata(fname)
-            key = f"{metadata['method']}_{metadata['distance']}_{'n' if metadata['normalized'] else 'raw'}"
+
+            with open(os.path.join(log_dir, fname), 'r') as f:
+                log = json.load(f)
+
+            # Determine if the run was optimized based on silhouette score
+            score = log.get("silhouetteScore", None)
+            k_origin = "opt" if isinstance(score, (float, int)) and score > 0 else "user"
+            key = f"{metadata['method']}_{metadata['distance']}_{'n' if metadata['normalized'] else 'raw'}_{k_origin}"
+            
             curr_timeseries = metadata["timestamp"]
+            metadata["timestamp"] = curr_timeseries
             
             if key not in latest_logs or curr_timeseries > latest_logs[key]["metadata"]["timestamp"]:
-                with open(os.path.join(log_dir, fname), 'r') as f:
-                    log = json.load(f)
-                metadata["timestamp"] = curr_timeseries
                 latest_logs[key] = {
                     "log": log,
                     "metadata": metadata,
@@ -197,6 +203,10 @@ def compute_similarity_of_clustering_methodologies(traditional_results, graph_re
         base_labels = base_log["labels"]
         base_k = base_log["nClusters"]
         base_qty = base_log["dataQuantity"]
+        score = base_log.get("silhouetteScore", None)
+        k_origin = "opt" if isinstance(score, (float, int)) and score > 0 else "user"
+        print(f"{default_key} → silhouetteScore: {base_log.get('silhouetteScore')} → k_origin: {k_origin}")
+
         
         for graph_key, graph_entry in graph_results.items():
             
@@ -212,6 +222,7 @@ def compute_similarity_of_clustering_methodologies(traditional_results, graph_re
                 "Baseline_Dissimilarity": base_log["distanceMeasure"],
                 "Normalized": default_entry["metadata"]["normalized"],
                 "k": base_k,
+                "k_origin": k_origin,
                 "ARI": adjusted_rand_score(base_labels, graph_log["labels"]),
                 "RAND": rand_score(base_labels, graph_log["labels"]),
                 "NMI": normalized_mutual_info_score(base_labels, graph_log["labels"])
